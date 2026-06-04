@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: dynamic-layout(~{::section})}">
+
+<body>
+
+<section>
+
+    <div class="row">
+
+        <!-- FORM -->
+        <div class="col-md-4">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header bg-warning fw-bold">
+                    Thông tin sản phẩm
+                </div>
+
+                <div class="card-body">
+
+                    <form method="post"
+                          th:object="${sanPham}">
+
+                        <input type="hidden"
+                               th:field="*{idSanPham}">
+
+                        <div class="mb-3">
+
+                            <label>Tên sản phẩm</label>
+
+                            <input type="text"
+                                   class="form-control"
+                                   th:field="*{tenSanPham}"
+                                   required>
+
+                            <small class="text-danger"
+                                   th:if="${#fields.hasErrors('tenSanPham')}"
+                                   th:errors="*{tenSanPham}">
+                            </small>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label>Giá</label>
+
+                            <input type="number"
+                                   class="form-control"
+                                   th:field="*{gia}"
+                                   required
+                                   min="1"
+                                   placeholder="Nhập giá sản phẩm">
+
+                            <small class="text-danger"
+                                   th:if="${#fields.hasErrors('gia')}"
+                                   th:errors="*{gia}">
+                            </small>
+
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Mô tả</label>
+                            <textarea class="form-control"
+                                      rows="3"
+                                      th:field="*{moTa}">
+                            </textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Ảnh sản phẩm</label>
+
+                            <input type="file"
+                                   name="imageFile"
+                                   class="form-control"
+                                   accept="image/*">
+
+                            <div th:if="${sanPham.hinhAnh != null}">
+                                <img th:src="${sanPham.hinhAnh}"
+                                     width="120"
+                                     class="mt-2 rounded">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Danh mục</label>
+
+                            <select class="form-control"
+                                    th:field="*{idDanhMuc}">
+
+                                <option value="">-- Chọn danh mục --</option>
+
+                                <option th:each="dm : ${danhMucs}"
+                                        th:value="${dm.idDanhMuc}"
+                                        th:text="${dm.tenDanhMuc}">
+                                </option>
+
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label>Trạng thái</label>
+
+                            <select class="form-control"
+                                    th:field="*{trangThai}">
+
+                                <option th:value="true">
+                                    Đang bán
+                                </option>
+
+                                <option th:value="false">
+                                    Ngừng bán
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="d-flex gap-2">
+
+                            <button type="submit"
+                                    class="btn btn-success"
+                                    formaction="/nhan-vien/san-pham/add">
+                                Thêm
+                            </button>
+
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    formaction="/nhan-vien/san-pham/update">
+                                Sửa
+                            </button>
+
+                            <a href="/nhan-vien/san-pham"
+                               class="btn btn-secondary">
+                                Mới
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- DANH SÁCH -->
+        <div class="col-md-8">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header bg-dark text-white fw-bold">
+                    Danh sách sản phẩm
+                </div>
+
+                <div class="card-body">
+
+                    <table class="table table-bordered table-hover">
+
+                        <thead>
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Ảnh</th>
+                            <th>Tên</th>
+                            <th>Giá</th>
+                            <th>Trạng thái</th>
+                            <th width="150">Thao tác</th>
+                        </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                        <tr th:each="sp : ${list}">
+
+                            <td th:text="${sp.idSanPham}"></td>
+
+                            <td>
+
+                                <img th:if="${sp.hinhAnh != null}"
+                                     th:src="${sp.hinhAnh}"
+                                     width="70"
+                                     height="70"
+                                     style="object-fit: cover; border-radius: 8px;">
+
+                            </td>
+
+                            <td th:text="${sp.tenSanPham}"></td>
+
+                            <td th:text="${#numbers.formatDecimal(sp.gia,0,'POINT',0,'COMMA')} + ' đ'"></td>
+
+                            <td>
+
+                                <span class="badge bg-success"
+                                      th:if="${sp.trangThai}">
+                                    Đang bán
+                                </span>
+
+                                <span class="badge bg-danger"
+                                      th:unless="${sp.trangThai}">
+                                    Ngừng bán
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <a th:href="@{'/nhan-vien/san-pham/detail/' + ${sp.idSanPham}}"
+                                   class="btn btn-warning btn-sm">
+                                    Sửa
+                                </a>
+
+                                <a th:if="${sp.trangThai}"
+                                   th:href="@{'/nhan-vien/san-pham/toggle/' + ${sp.idSanPham}}"
+                                   class="btn btn-danger btn-sm">
+                                    Ngừng bán
+                                </a>
+
+                                <a th:unless="${sp.trangThai}"
+                                   th:href="@{'/nhan-vien/san-pham/toggle/' + ${sp.idSanPham}}"
+                                   class="btn btn-success btn-sm">
+                                    Hoạt động lại
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+</body>
+</html>

@@ -1,0 +1,192 @@
+/* RESET SYSTEM */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f5f6fa;
+}
+
+/* LAYOUT CONTAINER */
+.container-fluid {
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.layout-row {
+    display:flex;
+    flex-wrap:nowrap;
+    min-height:100vh;
+}
+
+/* SIDEBAR FIXED TÔNG NÂU SANG TRỌNG */
+.sidebar {
+    background: #4a3319;
+    color: #fff;
+    min-height: 100vh;
+    padding: 0;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, .1);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; /* Không cho phép thanh menu bị bóp nghẹt diện tích */
+}
+
+/* LOGO KHU VỰC ĐẦU SIDEBAR */
+.logo-container {
+    padding: 20px;
+    background: #3d2913;
+    border-bottom: 1px solid #5a4022;
+}
+
+.logo-container img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    margin-right: 10px;
+    object-fit: cover;
+}
+
+.logo-text {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* MENU CHÍNH */
+.menu-list {
+    flex: 1;
+    padding: 15px 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 25px;
+    color: #cbd5e1;
+    text-decoration: none;
+    transition: .3s ease;
+    font-size: .95rem;
+    cursor: pointer;
+}
+
+.menu-item i {
+    width: 25px;
+    margin-right: 12px;
+    font-size: 1rem;
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+}
+
+/* TRẠNG THÁI ACTIVE MENU CHÍNH */
+.active-main {
+    background: #ff9800 !important;
+    color: #fff !important;
+    font-weight: bold;
+}
+
+.active-main i {
+    color: #fff !important;
+}
+
+/* DROPDOWN MENU CON */
+.sub-menu-container {
+    padding-left: 10px;
+    border-left: 1px dashed #5a4022;
+    margin: 0 25px;
+    overflow: hidden;
+}
+
+.sub-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 15px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: .9rem;
+    transition: .2s ease;
+    border-radius: 8px;
+    margin-top: 5px;
+}
+
+.sub-menu-item:hover {
+    color: #ffaa44;
+    background: rgba(255, 255, 255, .05);
+}
+
+.sub-menu-item i {
+    width: 20px;
+    margin-right: 10px;
+    font-size: .85rem;
+}
+
+/* TRẠNG THÁI ACTIVE DANH MỤC CON */
+.active-sub {
+    background: #ffaa44 !important;
+    color: #4a3319 !important;
+    font-weight: bold;
+}
+
+/* HIỆU ỨNG XOAY MŨI TÊN */
+.style-arrow {
+    transition: transform .3s ease;
+}
+
+.menu-item[aria-expanded="true"] .style-arrow {
+    transform: rotate(180deg);
+}
+
+/* NÚT ĐĂNG XUẤT ĐỂ ĐÁY SIDEBAR */
+.logout-box {
+    border-top: 1px solid #5a4022;
+    background: #3d2913;
+    margin-top: auto;
+}
+
+/* VÙNG NỘI DUNG HIỂN THỊ BÊN PHẢI (Đã sửa lỗi tràn/nhảy khối) */
+.col-md-10 {
+    flex: 1; /* Tự động lấp đầy phần diện tích còn lại của màn hình */
+    width: auto;
+    max-height: 100vh;
+    overflow-y: auto; /* Nếu nội dung dài tự sinh thanh cuộn dọc riêng biệt */
+    padding: 25px;
+}
+
+/* SẢN PHẨM HOVER EFFECT */
+.product-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1) !important;
+}
+
+/* RESPONSIVE TRÊN ĐIỆN THOẠI */
+@media(max-width: 768px){
+    .row {
+        flex-wrap: wrap; /* Trở lại dòng bình thường khi xem trên mobile */
+    }
+    .sidebar {
+        min-height: auto;
+        width: 100%;
+    }
+    .logout-box {
+        margin-top: 0;
+    }
+}
+/* Tìm đến đoạn .col-md-10 trong file layout.css của bạn và cập nhật như sau: */
+.col-md-10 {
+    flex: 1;
+    width: auto;
+    max-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden; /* Chặn hoàn toàn thanh cuộn ngang nguy hiểm */
+    padding: 25px;
+}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: dynamic-layout(~{::section})}">
+
+<body>
+
+<section>
+
+    <h3 class="mb-4">Danh sách hóa đơn</h3>
+
+    <div class="card">
+        <div class="card-body">
+
+            <table class="table table-bordered table-hover">
+
+                <thead>
+                <tr>
+                    <th>Mã hóa đơn</th>
+                    <th>Ngày tạo</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th width="150">Thao tác</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="hd : ${hoaDons}">
+                    <td th:text="${hd.maHoaDon}"></td>
+
+                    <td th:text="${#temporals.format(hd.ngayTao,'dd/MM/yyyy HH:mm')}"></td>
+
+                    <td>
+                        <span th:text="${#numbers.formatDecimal(hd.thanhTien,0,'POINT',0,'COMMA')}"></span> đ
+                    </td>
+
+                    <td>
+                        <span class="badge bg-success">
+                            Đã thanh toán
+                        </span>
+                    </td>
+
+                    <td>
+                        <a th:href="@{/nhan-vien/hoa-don/{id}(id=${hd.idHoaDon})}"
+                           class="btn btn-primary btn-sm">
+                            Chi tiết
+                        </a>
+                    </td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</section>
+
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: dynamic-layout(~{::section})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Bán hàng tại quầy</title>
+</head>
+<body>
+<section>
+    <div class="d-flex flex-column flex-lg-row gap-3" style="width: 100%;">
+
+        <div class="flex-grow-1" style="min-width: 0;">
+            <div class="top-search mb-3">
+                <div class="row g-2">
+                    <div class="col-9">
+                        <input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm...">
+                    </div>
+                    <div class="col-3">
+                        <button class="btn btn-warning w-100 fw-bold">Tìm</button>
+                    </div>
+                </div>
+            </div>
+
+            <h4 class="mb-3">Danh sách sản phẩm</h4>
+
+            <div class="row g-3">
+                <div class="col-xl-4 col-md-6 col-12" th:each="sp : ${sanPhams}">
+                    <div class="product-card" style="background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <img th:src="${sp.hinhAnh != null ? sp.hinhAnh : 'https://cdn-icons-png.flaticon.com/512/1046/1046784.png'}"
+                                 class="product-img" alt="Sản phẩm" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
+                            <h6 class="mt-2 text-truncate" th:text="${sp.tenSanPham}"></h6>
+                        </div>
+                        <div>
+                            <div class="price" th:text="${#numbers.formatDecimal(sp.gia,0,'POINT',0,'COMMA')} + ' đ'" style="color: #ff7a00; font-weight: bold;"></div>
+                            <button class="btn btn-warning btn-sm mt-2 w-100 fw-bold" th:data-id="${sp.idSanPham}" th:data-ten="${sp.tenSanPham}" th:data-gia="${sp.gia}" onclick="moModal(this)">Thêm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cart-sidebar" style="width: 360px; flex-shrink: 0;">
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: sticky; top: 15px;">
+                <h5>Đơn hàng</h5>
+                <hr>
+                <div id="cartContainer"></div>
+                <div class="mb-3">
+
+                    <label class="fw-bold mb-1">
+                        Số điện thoại
+                    </label>
+
+                    <input type="text"
+                           id="soDienThoai"
+                           class="form-control"
+                           placeholder="Nhập số điện thoại"
+                           onblur="timKhachHang()">
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="fw-bold mb-1">
+                        Tên khách hàng
+                    </label>
+
+                    <input type="text"
+                           id="tenKhachHang"
+                           class="form-control"
+                           placeholder="Tên khách hàng">
+
+                </div>
+                <hr>
+                <textarea class="form-control" id="ghiChu" rows="3" placeholder="Ghi chú..."></textarea>
+                <hr>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-secondary">Tạm tính</span>
+                    <span id="tamTinh" class="fw-bold">0 đ</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Tổng tiền</h5>
+                    <h4 id="tongTien" class="mb-0" style="color:#ff7a00; font-weight: bold;">0 đ</h4>
+                </div>
+                <button class="btn btn-warning w-100 py-2 fw-bold" onclick="thanhToan()" style="background-color: #ff7a00; color: white; border: none; border-radius: 8px; font-size: 1.1rem;">Thanh toán</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="sizeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 16px;">
+                <div class="modal-header" style="background-color: #4a3319; color: white; border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                    <h5 class="modal-title"><i class="fa-solid fa-mug-hot me-2"></i>Tùy chọn sản phẩm</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: #333;">
+                    <input type="hidden" id="spId">
+                    <input type="hidden" id="spTen">
+                    <input type="hidden" id="spGia">
+
+                    <div class="fw-bold mb-2 text-secondary" style="font-size: 0.9rem;">1. CHỌN SIZE:</div>
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                        <div th:each="size : ${sizes}" class="size-item mb-2 d-flex align-items-center">
+                            <input type="radio" name="size" th:id="'size-' + ${size.idSize}" th:value="${size.idSize}" th:data-ten="${size.tenSize}" th:data-phuthu="${size.phuThu}">
+                            <label th:for="'size-' + ${size.idSize}" class="ms-2 cursor-pointer w-100 d-flex justify-content-between">
+                                <span th:text="${size.tenSize}" class="fw-semibold"></span>
+                                <span style="color: #ff7a00;">+<span th:text="${size.phuThu}"></span> đ</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="fw-bold mb-2 text-secondary" style="font-size: 0.9rem;">2. THÊM TOPPING (TÙY CHỌN):</div>
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; max-height: 200px; overflow-y: auto;">
+                        <div th:each="tp : ${toppings}" class="topping-item mb-2 d-flex align-items-center">
+                            <input type="checkbox" name="toppings" th:id="'tp-' + ${tp.idTopping}" th:value="${tp.idTopping}" th:data-ten="${tp.tenTopping}" th:data-gia="${tp.giaTopping}">
+                            <label th:for="'tp-' + ${tp.idTopping}" class="ms-2 cursor-pointer w-100 d-flex justify-content-between">
+                                <span th:text="${tp.tenTopping}"></span>
+                                <span style="color: #6c757d;">+<span th:text="${#numbers.formatDecimal(tp.giaTopping,0,'POINT',0,'COMMA')}"></span> đ</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: none;">
+                    <button class="btn btn-warning w-100 fw-bold py-2" onclick="xacNhanThem()" style="background-color: #ff7a00; color: white; border: none; border-radius: 8px;">
+                        Thêm vào đơn hàng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,116 @@
+body{
+margin:0;
+background:#f5f6fa;
+overflow-x:hidden;
+}
+
+/* LAYOUT CHÍNH */
+.app-layout{
+display:flex;
+min-height:100vh;
+}
+
+.content-wrapper{
+flex:1;
+padding:20px;
+overflow-y:auto;
+background:#f5f6fa;
+}
+
+/* KHU VỰC BÁN HÀNG */
+section{
+width:100%;
+}
+
+.d-flex.flex-column.flex-lg-row{
+align-items:flex-start;
+}
+
+/* DANH SÁCH SẢN PHẨM */
+.flex-grow-1{
+flex:1;
+min-width:0;
+}
+
+/* GIỎ HÀNG */
+.cart-sidebar{
+width:320px;
+min-width:320px;
+flex-shrink:0;
+}
+
+/* Ô TÌM KIẾM */
+.top-search{
+background:white;
+border-radius:12px;
+padding:12px;
+box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+
+/* CARD */
+.product-card{
+background:#fff;
+border-radius:12px;
+padding:15px;
+border:none;
+transition:.2s;
+box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+
+.product-card:hover{
+transform:translateY(-3px);
+box-shadow:0 6px 18px rgba(0,0,0,.12);
+}
+
+/* ẢNH */
+.product-img{
+width:100%;
+height:140px;
+object-fit:cover;
+border-radius:10px;
+}
+
+/* GIÁ */
+.price{
+color:#ff7a00;
+font-weight:700;
+font-size:18px;
+}
+
+/* MODAL */
+.size-item,
+.topping-item{
+margin-bottom:10px;
+}
+
+.cursor-pointer{
+cursor:pointer;
+}
+
+/* CART */
+#cartContainer{
+min-height:200px;
+}
+
+/* RESPONSIVE */
+@media(max-width:1200px){
+
+
+.cart-sidebar{
+    width:280px;
+    min-width:280px;
+}
+
+
+}
+
+@media(max-width:992px){
+
+
+.cart-sidebar{
+    width:100%;
+    min-width:100%;
+}
+
+
+}

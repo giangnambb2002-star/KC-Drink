@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      th:fragment="dynamic-layout(mainContent)">
+
+<head>
+    <meta charset="UTF-8">
+    <title>KC Drink - Hệ thống quản lý</title>
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/ban-hang.css">
+
+
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="logo-container d-flex align-items-center justify-content-center">
+            <img src="logo.jpg"
+                 alt="KC Drink Logo">
+
+            <div>
+                <div class="logo-text">KC DRINK</div>
+                <small style="color:#ffaa44;font-size:0.75rem;font-weight:bold;">
+                    NHÂN VIÊN
+                </small>
+            </div>
+        </div>
+
+        <div class="menu-list">
+
+            <a th:href="@{/nhan-vien/ban-hang}"
+               class="menu-item"
+               th:classappend="${menuActive == 'ban-hang'} ? ' active-main'">
+                <i class="fa-solid fa-store"></i>
+                <span>Bán hàng</span>
+            </a>
+
+            <a href="#danhMucCollapse"
+               class="menu-item d-flex justify-content-between align-items-center"
+               data-bs-toggle="collapse"
+               role="button">
+
+                <div>
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Danh mục sản phẩm</span>
+                </div>
+
+                <i class="fa-solid fa-chevron-down ms-auto"></i>
+            </a>
+
+            <div class="collapse show sub-menu-container"
+                 id="danhMucCollapse"
+                 th:if="${danhMucs != null}">
+
+                <a href="/nhan-vien/ban-hang"
+                   class="sub-menu-item">
+                    <i class="fa-solid fa-border-all"></i>
+                    <span>Tất cả sản phẩm</span>
+                </a>
+
+                <a th:each="dm : ${danhMucs}"
+                   th:href="@{/nhan-vien/ban-hang(danhMucId=${dm.idDanhMuc})}"
+                   class="sub-menu-item">
+
+                    <i class="fa-solid fa-mug-hot"></i>
+
+                    <span th:text="${dm.tenDanhMuc}">
+                    Danh mục
+                </span>
+                </a>
+
+            </div>
+
+            <hr style="border-color:#5a4022;margin:15px 25px;">
+
+            <a th:href="@{/nhan-vien/hoa-don}"
+               class="menu-item"
+               th:classappend="${menuActive == 'hoa-don'} ? ' active-main'">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <span>Hóa đơn</span>
+            </a>
+
+            <a th:href="@{/nhan-vien/khach-hang}" class="menu-item">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <span>Khách hàng</span>
+            </a>
+
+        </div>
+
+        <div class="logout-box">
+            <a href="/auth/logout"
+               class="menu-item text-danger fw-bold">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Đăng xuất</span>
+            </a>
+        </div>
+
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="content-wrapper">
+        <div th:replace="${mainContent}"></div>
+    </main>
+
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/ban-hang.js"></script>
+</body>
+</html>
