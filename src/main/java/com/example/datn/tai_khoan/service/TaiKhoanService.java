@@ -50,6 +50,7 @@ public class TaiKhoanService {
         taiKhoan.setPassword(passwordEncoder.encode(request.getPassword()));
         taiKhoan.setEmail(request.getEmail());
         taiKhoan.setRole(request.getRole());
+        taiKhoan.setNgayCapNhat(LocalDateTime.now());
         return repository.save(taiKhoan);
     }
     public void delete(Integer id) {
