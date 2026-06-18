@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/tai-khoan/**").hasRole("ADMIN")
                         .requestMatchers("/api/nhan-vien/**").hasRole("ADMIN")
+                        .requestMatchers("/api/khach-hang/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
