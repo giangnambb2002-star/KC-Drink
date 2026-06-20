@@ -1,8 +1,8 @@
-package com.example.datn.hoa_don.model;
+package com.example.datn.hoa_don.entity;
 
-import com.example.datn.khach_hang.model.KhachHang;
-import com.example.datn.nhan_vien.model.NhanVien;
-import com.example.datn.voucher.model.Voucher;
+import com.example.datn.khach_hang.entity.KhachHang;
+import com.example.datn.nhan_vien.entity.NhanVien;
+import com.example.datn.voucher.entity.Voucher;
 import jakarta.persistence.*;
 import lombok.*;
 

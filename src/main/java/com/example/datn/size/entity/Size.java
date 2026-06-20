@@ -1,4 +1,4 @@
-package com.example.datn.size.model;
+package com.example.datn.size.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

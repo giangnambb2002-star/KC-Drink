@@ -1,4 +1,4 @@
-package com.example.datn.voucher.model;
+package com.example.datn.voucher.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

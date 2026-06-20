@@ -1,4 +1,4 @@
-package com.example.datn.san_pham.model;
+package com.example.datn.san_pham.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

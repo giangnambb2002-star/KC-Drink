@@ -1,6 +1,6 @@
 package com.example.datn.san_pham.repository;
 
-import com.example.datn.san_pham.model.SanPham;
+import com.example.datn.san_pham.entity.SanPham;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

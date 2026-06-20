@@ -1,7 +1,7 @@
-package com.example.datn.hoa_don.model;
+package com.example.datn.hoa_don.entity;
 
-import com.example.datn.san_pham.model.SanPham;
-import com.example.datn.size.model.Size;
+import com.example.datn.san_pham.entity.SanPham;
+import com.example.datn.size.entity.Size;
 import jakarta.persistence.*;
 import lombok.*;
 

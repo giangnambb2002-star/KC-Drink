@@ -1,13 +1,13 @@
 package com.example.datn.ban_hang.service;
 
 import com.example.datn.ban_hang.dto.CartItem;
-import com.example.datn.hoa_don.model.HoaDon;
-import com.example.datn.hoa_don.model.HoaDonChiTiet;
+import com.example.datn.hoa_don.entity.HoaDon;
+import com.example.datn.hoa_don.entity.HoaDonChiTiet;
 import com.example.datn.hoa_don.repository.HoaDonChiTietRepository;
 import com.example.datn.hoa_don.repository.HoaDonRepository;
-import com.example.datn.san_pham.model.SanPham;
+import com.example.datn.san_pham.entity.SanPham;
 import com.example.datn.san_pham.repository.SanPhamRepository;
-import com.example.datn.size.model.Size;
+import com.example.datn.size.entity.Size;
 import com.example.datn.size.repository.SizeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

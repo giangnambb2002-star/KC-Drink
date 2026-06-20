@@ -1,6 +1,6 @@
 package com.example.datn.tai_khoan.controller;
 
-import com.example.datn.tai_khoan.model.TaiKhoan;
+import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.example.datn.tai_khoan.service.TaiKhoanService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;

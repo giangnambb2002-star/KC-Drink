@@ -1,6 +1,6 @@
 package com.example.datn.tai_khoan.service;
 
-import com.example.datn.tai_khoan.model.TaiKhoan;
+import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.example.datn.tai_khoan.repository.TaiKhoanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

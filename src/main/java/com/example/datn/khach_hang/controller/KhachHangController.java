@@ -1,6 +1,6 @@
 package com.example.datn.khach_hang.controller;
 
-import com.example.datn.khach_hang.model.KhachHang;
+import com.example.datn.khach_hang.entity.KhachHang;
 import com.example.datn.khach_hang.repository.KhachHangRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

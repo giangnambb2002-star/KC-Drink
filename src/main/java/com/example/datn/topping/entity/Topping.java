@@ -1,4 +1,4 @@
-package com.example.datn.topping.model;
+package com.example.datn.topping.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

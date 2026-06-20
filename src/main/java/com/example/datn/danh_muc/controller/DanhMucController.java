@@ -1,6 +1,6 @@
 package com.example.datn.danh_muc.controller;
 
-import com.example.datn.danh_muc.model.DanhMuc;
+import com.example.datn.danh_muc.entity.DanhMuc;
 import com.example.datn.danh_muc.service.DanhMucService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;

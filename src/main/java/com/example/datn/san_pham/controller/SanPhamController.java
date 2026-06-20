@@ -1,7 +1,7 @@
 package com.example.datn.san_pham.controller;
 
 import com.example.datn.danh_muc.service.DanhMucService;
-import com.example.datn.san_pham.model.SanPham;
+import com.example.datn.san_pham.entity.SanPham;
 import com.example.datn.san_pham.service.SanPhamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.example.datn.danh_muc.model;
+package com.example.datn.danh_muc.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

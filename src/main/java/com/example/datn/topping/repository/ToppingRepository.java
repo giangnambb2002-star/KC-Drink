@@ -1,6 +1,6 @@
 package com.example.datn.topping.repository;
 
-import com.example.datn.topping.model.Topping;
+import com.example.datn.topping.entity.Topping;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ToppingRepository

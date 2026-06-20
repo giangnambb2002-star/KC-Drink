@@ -1,7 +1,7 @@
     package com.example.datn.hoa_don.controller;
     
-    import com.example.datn.hoa_don.model.HoaDon;
-    import com.example.datn.hoa_don.model.HoaDonChiTiet;
+    import com.example.datn.hoa_don.entity.HoaDon;
+    import com.example.datn.hoa_don.entity.HoaDonChiTiet;
     import com.example.datn.hoa_don.repository.HoaDonChiTietRepository;
     import com.example.datn.hoa_don.repository.HoaDonRepository;
     import lombok.RequiredArgsConstructor;

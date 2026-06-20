@@ -1,6 +1,6 @@
 package com.example.datn.danh_muc.repository;
 
-import com.example.datn.danh_muc.model.DanhMuc;
+import com.example.datn.danh_muc.entity.DanhMuc;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

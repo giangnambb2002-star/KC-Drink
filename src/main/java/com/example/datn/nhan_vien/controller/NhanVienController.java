@@ -1,8 +1,7 @@
 package com.example.datn.nhan_vien.controller;
 
 import com.example.datn.danh_muc.repository.DanhMucRepository;
-import com.example.datn.hoa_don.repository.HoaDonRepository;
-import com.example.datn.san_pham.model.SanPham;
+import com.example.datn.san_pham.entity.SanPham;
 import com.example.datn.san_pham.repository.SanPhamRepository;
 import com.example.datn.size.repository.SizeRepository;
 import com.example.datn.topping.repository.ToppingRepository;

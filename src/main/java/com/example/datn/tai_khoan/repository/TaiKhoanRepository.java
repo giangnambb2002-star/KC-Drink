@@ -1,6 +1,6 @@
 package com.example.datn.tai_khoan.repository;
 
-import com.example.datn.tai_khoan.model.TaiKhoan;
+import com.example.datn.tai_khoan.entity.TaiKhoan;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

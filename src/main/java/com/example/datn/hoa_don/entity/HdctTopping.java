@@ -1,6 +1,6 @@
-package com.example.datn.hoa_don.model;
+package com.example.datn.hoa_don.entity;
 
-import com.example.datn.topping.model.Topping;
+import com.example.datn.topping.entity.Topping;
 import jakarta.persistence.*;
 import lombok.*;
 

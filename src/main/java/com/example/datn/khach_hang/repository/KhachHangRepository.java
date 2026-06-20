@@ -1,6 +1,6 @@
 package com.example.datn.khach_hang.repository;
 
-import com.example.datn.khach_hang.model.KhachHang;
+import com.example.datn.khach_hang.entity.KhachHang;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

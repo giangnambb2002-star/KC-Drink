@@ -1,6 +1,6 @@
 package com.example.datn.san_pham.service;
 
-import com.example.datn.san_pham.model.SanPham;
+import com.example.datn.san_pham.entity.SanPham;
 import com.example.datn.san_pham.repository.SanPhamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

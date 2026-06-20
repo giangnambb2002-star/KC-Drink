@@ -1,6 +1,6 @@
 package com.example.datn.danh_muc.service;
 
-import com.example.datn.danh_muc.model.DanhMuc;
+import com.example.datn.danh_muc.entity.DanhMuc;
 import com.example.datn.danh_muc.repository.DanhMucRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

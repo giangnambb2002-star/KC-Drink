@@ -1,6 +1,6 @@
 package com.example.datn.size.repository;
 
-import com.example.datn.size.model.Size;
+import com.example.datn.size.entity.Size;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SizeRepository

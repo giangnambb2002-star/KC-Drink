@@ -1,6 +1,6 @@
-package com.example.datn.khach_hang.model;
+package com.example.datn.khach_hang.entity;
 
-import com.example.datn.tai_khoan.model.TaiKhoan;
+import com.example.datn.tai_khoan.entity.TaiKhoan;
 import jakarta.persistence.*;
 import lombok.*;
 
