@@ -37,6 +37,9 @@ public class NhanVien {
     @Column(name = "chuc_vu")
     private String chucVu;
 
+    @Column(name = "trang_thai")
+    private Integer trangThai;
+
     @OneToOne
     @JoinColumn(name = "id_tai_khoan")
     private TaiKhoan taiKhoan;
