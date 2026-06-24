@@ -3,9 +3,11 @@ package com.example.datn.san_pham.service;
 import com.example.datn.san_pham.entity.SanPham;
 import com.example.datn.san_pham.repository.SanPhamRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -23,11 +25,6 @@ public class SanPhamService {
     }
 
     public SanPham add(SanPham sanPham) {
-
-        if (sanPham.getNgayTao() == null) {
-            sanPham.setNgayTao(LocalDate.now());
-        }
-
         return repository.save(sanPham);
     }
 
@@ -41,10 +38,9 @@ public class SanPhamService {
 
         old.setTenSanPham(sanPham.getTenSanPham());
         old.setGia(sanPham.getGia());
-        old.setMoTa(sanPham.getMoTa());
         old.setHinhAnh(sanPham.getHinhAnh());
-        old.setTrangThai(sanPham.getTrangThai());
         old.setIdDanhMuc(sanPham.getIdDanhMuc());
+        old.setTrangThai(sanPham.getTrangThai());
 
         return repository.save(old);
     }
@@ -58,6 +54,7 @@ public class SanPhamService {
             repository.save(sp);
         }
     }
+
     public boolean isTenSanPhamExist(String tenSanPham) {
         return repository.existsByTenSanPham(tenSanPham);
     }
@@ -69,6 +66,22 @@ public class SanPhamService {
         return repository.existsByTenSanPhamAndIdSanPhamNot(
                 tenSanPham,
                 idSanPham
+        );
+    }
+    public Page<SanPham> search(
+            String keyword,
+            int page,
+            int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return repository.findAll(pageable);
+        }
+
+        return repository.findByTenSanPhamContainingIgnoreCase(
+                keyword,
+                pageable
         );
     }
 }

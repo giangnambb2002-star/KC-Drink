@@ -12,6 +12,9 @@ import com.example.datn.size.repository.SizeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.datn.ban_hang.dto.ThanhToanRequest;
+import com.example.datn.khach_hang.entity.KhachHang;
+import com.example.datn.khach_hang.repository.KhachHangRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,15 +28,39 @@ public class BanHangService {
     private final HoaDonChiTietRepository hoaDonChiTietRepository;
     private final SanPhamRepository sanPhamRepository;
     private final SizeRepository sizeRepository;
+    private final KhachHangRepository khachHangRepository;
 
     @Transactional(rollbackFor = Exception.class)
-    public void thanhToan(List<CartItem> cartItems) throws Exception {
+    public void thanhToan(
+            List<CartItem> cartItems,
+            ThanhToanRequest request) throws Exception {
+
         BigDecimal tongTien = BigDecimal.ZERO;
+
         for (CartItem item : cartItems) {
             tongTien = tongTien.add(item.getThanhTien());
         }
 
-        // 1. Tạo và lưu thực thể Hóa đơn gốc trước
+        KhachHang khachHang = null;
+
+        if (request.getSdt() != null && !request.getSdt().isBlank()) {
+
+            khachHang = khachHangRepository
+                    .findBySdt(request.getSdt())
+                    .orElse(null);
+
+            if (khachHang == null) {
+
+                khachHang = KhachHang.builder()
+                        .tenKhachHang(request.getTenKhachHang())
+                        .sdt(request.getSdt())
+                        .diemTichLuy(0)
+                        .build();
+
+                khachHang = khachHangRepository.saveAndFlush(khachHang);
+            }
+        }
+
         HoaDon hdBanDau = HoaDon.builder()
                 .maHoaDon("HD" + System.currentTimeMillis())
                 .ngayTao(LocalDateTime.now())
@@ -42,36 +69,32 @@ public class BanHangService {
                 .thanhTien(tongTien)
                 .hinhThucThanhToan("TIEN_MAT")
                 .trangThai("DA_THANH_TOAN")
-                .ghiChu("Bán hàng tại quầy")
+                .ghiChu(request.getGhiChu())
+                .khachHang(khachHang)
                 .build();
 
-        // ÉP BUỘC ĐỒNG BỘ: saveAndFlush bắt database sinh ID tự tăng ngay lập tức
         HoaDon hoaDonDaLuu = hoaDonRepository.saveAndFlush(hdBanDau);
 
-        // 2. Vòng lặp bóc tách từng phần tử giỏ hàng lưu vào HoaDonChiTiet
         for (CartItem item : cartItems) {
+
             SanPham sanPham = sanPhamRepository.findById(item.getSanPhamId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
 
             Size size = sizeRepository.findById(item.getSizeId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy size"));
 
-            // Đơn giá và thành tiền lấy trọn vẹn từ CartItem đã tính Topping
             HoaDonChiTiet hdct = HoaDonChiTiet.builder()
                     .hoaDon(hoaDonDaLuu)
                     .sanPham(sanPham)
                     .size(size)
-
                     .tenSanPham(item.getTenSanPham())
                     .tenSize(item.getTenSize())
                     .tenTopping(item.getTenTopping())
-
                     .soLuong(item.getSoLuong())
                     .donGia(item.getDonGia())
                     .thanhTien(item.getThanhTien())
                     .build();
 
-            // Lưu chi tiết hóa đơn đồng bộ xuống DB
             hoaDonChiTietRepository.saveAndFlush(hdct);
         }
     }

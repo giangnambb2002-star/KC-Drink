@@ -1,6 +1,7 @@
 package com.example.datn.ban_hang.controller;
 
 import com.example.datn.ban_hang.dto.CartItem;
+import com.example.datn.ban_hang.dto.ThanhToanRequest;
 import com.example.datn.ban_hang.service.BanHangService;
 import com.example.datn.hoa_don.repository.HoaDonChiTietRepository;
 import com.example.datn.hoa_don.repository.HoaDonRepository;
@@ -60,19 +61,30 @@ public class BanHangController {
     }
 
     @PostMapping("/thanh-toan")
-    public ResponseEntity<String> thanhToan(HttpSession session) {
+    public ResponseEntity<String> thanhToan(
+            @RequestBody ThanhToanRequest request,
+            HttpSession session) {
+
         List<CartItem> cart = (List<CartItem>) session.getAttribute("cart");
+
         if (cart == null || cart.isEmpty()) {
             return ResponseEntity.badRequest().body("Giỏ hàng của bạn đang trống!");
         }
 
         try {
-            banHangService.thanhToan(cart);
+
+            banHangService.thanhToan(cart, request);
+
             session.removeAttribute("cart");
+
             return ResponseEntity.ok("Thanh toán thành công!");
+
         } catch (Exception e) {
+
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Lỗi hệ thống khi lưu hóa đơn: " + e.getMessage());
+
+            return ResponseEntity.status(500)
+                    .body("Lỗi hệ thống khi lưu hóa đơn: " + e.getMessage());
         }
     }
 

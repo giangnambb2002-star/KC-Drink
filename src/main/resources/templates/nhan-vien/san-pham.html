@@ -1,247 +1,233 @@
 <!DOCTYPE html>
+
 <html lang="vi"
       xmlns:th="http://www.thymeleaf.org"
       th:replace="~{fragments/layout :: dynamic-layout(~{::section})}">
-
 <body>
 
 <section>
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-    <div class="row">
+        <h3>Quản lý sản phẩm</h3>
 
-        <!-- FORM -->
-        <div class="col-md-4">
+        <a th:href="@{/nhan-vien/san-pham/create}"
+           class="btn btn-success">
 
-            <div class="card shadow-sm">
+            <i class="fa-solid fa-plus"></i>
+            Thêm sản phẩm
 
-                <div class="card-header bg-warning fw-bold">
-                    Thông tin sản phẩm
-                </div>
+        </a>
 
-                <div class="card-body">
+    </div>
 
-                    <form method="post"
-                          th:object="${sanPham}">
+    <!-- TÌM KIẾM + LỌC -->
 
-                        <input type="hidden"
-                               th:field="*{idSanPham}">
+    <div class="card shadow-sm border-0 mb-3">
 
-                        <div class="mb-3">
+        <div class="card-body">
 
-                            <label>Tên sản phẩm</label>
+            <form method="get"
+                  th:action="@{/nhan-vien/san-pham}">
 
-                            <input type="text"
-                                   class="form-control"
-                                   th:field="*{tenSanPham}"
-                                   required>
+                <div class="row g-2">
 
-                            <small class="text-danger"
-                                   th:if="${#fields.hasErrors('tenSanPham')}"
-                                   th:errors="*{tenSanPham}">
-                            </small>
+                    <div class="col-md-5">
 
-                        </div>
+                        <input type="text"
+                               name="keyword"
+                               class="form-control"
+                               placeholder="Tìm kiếm sản phẩm..."
+                               th:value="${keyword}">
 
-                        <div class="mb-3">
+                    </div>
 
-                            <label>Giá</label>
+                    <div class="col-md-4">
 
-                            <input type="number"
-                                   class="form-control"
-                                   th:field="*{gia}"
-                                   required
-                                   min="1"
-                                   placeholder="Nhập giá sản phẩm">
+                        <select name="danhMucId"
+                                class="form-select">
 
-                            <small class="text-danger"
-                                   th:if="${#fields.hasErrors('gia')}"
-                                   th:errors="*{gia}">
-                            </small>
+                            <option value="">
+                                Tất cả danh mục
+                            </option>
 
-                        </div>
+                            <option th:each="dm : ${danhMucs}"
+                                    th:value="${dm.idDanhMuc}"
+                                    th:text="${dm.tenDanhMuc}"
+                                    th:selected="${danhMucId == dm.idDanhMuc}">
+                            </option>
 
-                        <div class="mb-3">
-                            <label>Mô tả</label>
-                            <textarea class="form-control"
-                                      rows="3"
-                                      th:field="*{moTa}">
-                            </textarea>
-                        </div>
+                        </select>
 
-                        <div class="mb-3">
-                            <label>Ảnh sản phẩm</label>
+                    </div>
 
-                            <input type="file"
-                                   name="imageFile"
-                                   class="form-control"
-                                   accept="image/*">
+                    <div class="col-md-3">
 
-                            <div th:if="${sanPham.hinhAnh != null}">
-                                <img th:src="${sanPham.hinhAnh}"
-                                     width="120"
-                                     class="mt-2 rounded">
-                            </div>
-                        </div>
+                        <button class="btn btn-warning w-100">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            Tìm kiếm
+                        </button>
 
-                        <div class="mb-3">
-                            <label>Danh mục</label>
-
-                            <select class="form-control"
-                                    th:field="*{idDanhMuc}">
-
-                                <option value="">-- Chọn danh mục --</option>
-
-                                <option th:each="dm : ${danhMucs}"
-                                        th:value="${dm.idDanhMuc}"
-                                        th:text="${dm.tenDanhMuc}">
-                                </option>
-
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-
-                            <label>Trạng thái</label>
-
-                            <select class="form-control"
-                                    th:field="*{trangThai}">
-
-                                <option th:value="true">
-                                    Đang bán
-                                </option>
-
-                                <option th:value="false">
-                                    Ngừng bán
-                                </option>
-
-                            </select>
-
-                        </div>
-
-                        <div class="d-flex gap-2">
-
-                            <button type="submit"
-                                    class="btn btn-success"
-                                    formaction="/nhan-vien/san-pham/add">
-                                Thêm
-                            </button>
-
-                            <button type="submit"
-                                    class="btn btn-primary"
-                                    formaction="/nhan-vien/san-pham/update">
-                                Sửa
-                            </button>
-
-                            <a href="/nhan-vien/san-pham"
-                               class="btn btn-secondary">
-                                Mới
-                            </a>
-
-                        </div>
-
-                    </form>
+                    </div>
 
                 </div>
 
-            </div>
-
-        </div>
-
-        <!-- DANH SÁCH -->
-        <div class="col-md-8">
-
-            <div class="card shadow-sm">
-
-                <div class="card-header bg-dark text-white fw-bold">
-                    Danh sách sản phẩm
-                </div>
-
-                <div class="card-body">
-
-                    <table class="table table-bordered table-hover">
-
-                        <thead>
-
-                        <tr>
-                            <th>ID</th>
-                            <th>Ảnh</th>
-                            <th>Tên</th>
-                            <th>Giá</th>
-                            <th>Trạng thái</th>
-                            <th width="150">Thao tác</th>
-                        </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                        <tr th:each="sp : ${list}">
-
-                            <td th:text="${sp.idSanPham}"></td>
-
-                            <td>
-
-                                <img th:if="${sp.hinhAnh != null}"
-                                     th:src="${sp.hinhAnh}"
-                                     width="70"
-                                     height="70"
-                                     style="object-fit: cover; border-radius: 8px;">
-
-                            </td>
-
-                            <td th:text="${sp.tenSanPham}"></td>
-
-                            <td th:text="${#numbers.formatDecimal(sp.gia,0,'POINT',0,'COMMA')} + ' đ'"></td>
-
-                            <td>
-
-                                <span class="badge bg-success"
-                                      th:if="${sp.trangThai}">
-                                    Đang bán
-                                </span>
-
-                                <span class="badge bg-danger"
-                                      th:unless="${sp.trangThai}">
-                                    Ngừng bán
-                                </span>
-
-                            </td>
-
-                            <td>
-
-                                <a th:href="@{'/nhan-vien/san-pham/detail/' + ${sp.idSanPham}}"
-                                   class="btn btn-warning btn-sm">
-                                    Sửa
-                                </a>
-
-                                <a th:if="${sp.trangThai}"
-                                   th:href="@{'/nhan-vien/san-pham/toggle/' + ${sp.idSanPham}}"
-                                   class="btn btn-danger btn-sm">
-                                    Ngừng bán
-                                </a>
-
-                                <a th:unless="${sp.trangThai}"
-                                   th:href="@{'/nhan-vien/san-pham/toggle/' + ${sp.idSanPham}}"
-                                   class="btn btn-success btn-sm">
-                                    Hoạt động lại
-                                </a>
-
-                            </td>
-
-                        </tr>
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
+            </form>
 
         </div>
 
     </div>
 
+    <!-- BẢNG -->
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+
+                <tr>
+
+                    <th>ID</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Danh mục</th>
+                    <th>Giá</th>
+                    <th>Trạng thái</th>
+                    <th width="260">Thao tác</th>
+
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                <tr th:if="${#lists.isEmpty(list)}">
+
+                    <td colspan="6"
+                        class="text-center text-muted">
+
+                        Không có dữ liệu
+
+                    </td>
+
+                </tr>
+
+                <tr th:each="sp : ${list}">
+
+                    <td th:text="${sp.idSanPham}"></td>
+
+                    <td th:text="${sp.tenSanPham}"></td>
+
+                    <td>
+
+                    <span th:each="dm : ${danhMucs}"
+                          th:if="${dm.idDanhMuc == sp.idDanhMuc}"
+                          th:text="${dm.tenDanhMuc}">
+                    </span>
+
+                    </td>
+
+                    <td th:text="${#numbers.formatDecimal(sp.gia,0,'POINT',0,'COMMA')} + ' đ'"></td>
+
+                    <td>
+
+                    <span class="badge bg-success"
+                          th:if="${sp.trangThai}">
+                        Hoạt động
+                    </span>
+
+                        <span class="badge bg-danger"
+                              th:unless="${sp.trangThai}">
+                        Ngừng bán
+                    </span>
+
+                    </td>
+
+                    <td>
+
+                        <a th:href="@{/nhan-vien/san-pham/edit/{id}(id=${sp.idSanPham})}"
+                           class="btn btn-warning btn-sm">
+                            Sửa
+                        </a>
+
+                        <a th:href="@{/nhan-vien/san-pham/detail/{id}(id=${sp.idSanPham})}"
+                           class="btn btn-info btn-sm">
+                            Chi tiết
+                        </a>
+
+                        <a th:href="@{/nhan-vien/san-pham/toggle/{id}(id=${sp.idSanPham})}"
+                           class="btn btn-secondary btn-sm">
+
+                            [[${sp.trangThai} ? 'Ngừng bán' : 'Hoạt động']]
+
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+            <!-- PHÂN TRANG -->
+
+            <nav th:if="${totalPages > 0}">
+
+                <ul class="pagination justify-content-center">
+
+                    <li class="page-item"
+                        th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+
+                        <a class="page-link"
+                           th:href="@{/nhan-vien/san-pham(
+                            page=${currentPage-1},
+                            keyword=${keyword},
+                            danhMucId=${danhMucId})}">
+
+                            «
+
+                        </a>
+
+                    </li>
+
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0,totalPages-1)}"
+                        th:classappend="${i == currentPage ? 'active' : ''}">
+
+                        <a class="page-link"
+                           th:text="${i+1}"
+                           th:href="@{/nhan-vien/san-pham(
+                            page=${i},
+                            keyword=${keyword},
+                            danhMucId=${danhMucId})}">
+                        </a>
+
+                    </li>
+
+                    <li class="page-item"
+                        th:classappend="${currentPage == totalPages-1 ? 'disabled' : ''}">
+
+                        <a class="page-link"
+                           th:href="@{/nhan-vien/san-pham(
+                            page=${currentPage+1},
+                            keyword=${keyword},
+                            danhMucId=${danhMucId})}">
+
+                            »
+
+                        </a>
+
+                    </li>
+
+                </ul>
+
+            </nav>
+
+        </div>
+
+    </div>
 </section>
 
 </body>

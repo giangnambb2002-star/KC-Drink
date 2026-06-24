@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: dynamic-layout(~{::section})}">
+
+<body>
+<section>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Quản lý khách hàng</h3>
+
+        <a href="/khach-hang/create"
+           class="btn btn-success">
+            <i class="fa fa-plus"></i> Thêm khách hàng
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form method="get" action="/khach-hang">
+                <div class="row">
+                    <div class="col-md-10">
+                        <input type="text"
+                               name="keyword"
+                               class="form-control"
+                               placeholder="Nhập tên hoặc số điện thoại">
+                    </div>
+
+                    <div class="col-md-2">
+                        <button class="btn btn-warning w-100">
+                            Tìm kiếm
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+
+            <table class="table table-bordered table-hover align-middle">
+
+                <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Tên khách hàng</th>
+                    <th>Số điện thoại</th>
+                    <th>Email</th>
+                    <th>Địa chỉ</th>
+                    <th>Điểm tích lũy</th>
+                    <th width="140">Thao tác</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="kh : ${khachHangs}">
+
+                    <td th:text="${kh.idKhachHang}"></td>
+
+                    <td th:text="${kh.tenKhachHang}"></td>
+
+                    <td th:text="${kh.sdt}"></td>
+
+                    <td th:text="${kh.email}"></td>
+
+                    <td th:text="${kh.diaChi}"></td>
+
+                    <td th:text="${kh.diemTichLuy}"></td>
+
+                    <td>
+
+                        <a th:href="@{/khach-hang/edit/{id}(id=${kh.idKhachHang})}"
+                           class="btn btn-warning btn-sm">
+                            Sửa
+                        </a>
+
+                        <a th:href="@{/khach-hang/detail/{id}(id=${kh.idKhachHang})}"
+                           class="btn btn-info btn-sm text-white">
+                            Xem
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

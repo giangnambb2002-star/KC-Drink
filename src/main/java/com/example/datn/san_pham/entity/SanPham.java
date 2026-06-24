@@ -6,8 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
-import java.time.LocalDate;
-
 @Entity
 @Table(name = "SAN_PHAM")
 @Data
@@ -27,18 +25,13 @@ public class SanPham {
     @Column(name = "gia")
     private Double gia;
 
-    @Column(name = "mo_ta")
-    private String moTa;
-
     @Column(name = "hinh_anh")
     private String hinhAnh;
 
-    @Column(name = "trang_thai", nullable = false)
-    private Boolean trangThai = true;
-
-    @Column(name = "ngay_tao")
-    private LocalDate ngayTao;
-
     @Column(name = "id_danh_muc")
     private Integer idDanhMuc;
+
+    @Column(name = "trang_thai")
+    private Boolean trangThai = true;
+
 }
