@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: dynamic-layout(~{::section})}">
+<body>
+
+<section>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h3>Quản lý Khuyến mãi</h3>
+
+        <button class="btn btn-success">
+
+            <i class="fa-solid fa-plus"></i>
+
+            Thêm Khuyến mãi
+
+        </button>
+
+    </div>
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <table class="table table-bordered">
+
+                <thead class="table-dark">
+
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên chương trình</th>
+                    <th>Ngày bắt đầu</th>
+                    <th>Ngày kết thúc</th>
+                    <th>Trạng thái</th>
+                    <th width="180">Thao tác</th>
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                <tr>
+
+                    <td colspan="6"
+                        class="text-center">
+
+                        Chưa có dữ liệu
+
+                    </td>
+
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</section>
+
+</body>
+</html>
