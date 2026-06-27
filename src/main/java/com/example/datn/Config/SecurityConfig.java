@@ -25,12 +25,16 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http
     ) throws Exception {
-
         http
+                .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/tai-khoan/**").hasRole("ADMIN")
+                        .requestMatchers("/api/auth/login", "/api/auth/register")
+                        .permitAll()
+
+                        .requestMatchers("/api/tai-khoan/**")
+                        .hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
