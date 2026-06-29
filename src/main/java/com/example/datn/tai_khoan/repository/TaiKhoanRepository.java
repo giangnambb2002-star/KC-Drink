@@ -1,5 +1,6 @@
 package com.example.datn.tai_khoan.repository;
 
+import com.example.datn.nhan_vien.entity.NhanVien;
 import com.example.datn.tai_khoan.entity.TaiKhoan;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,7 +11,7 @@ public interface TaiKhoanRepository
     Optional<TaiKhoan> findByUsername(String username);
 
     Optional<TaiKhoan> findByEmail(String email);
-
+//    Optional<NhanVien> findByTaiKhoan(TaiKhoan taiKhoan);
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);

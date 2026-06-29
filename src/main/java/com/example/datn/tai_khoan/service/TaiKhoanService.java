@@ -4,6 +4,7 @@ import com.example.datn.tai_khoan.dto.TaiKhoanRequest;
 import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.example.datn.tai_khoan.repository.TaiKhoanRepository;
 import lombok.RequiredArgsConstructor;
+import com.example.datn.tai_khoan.dto.TaiKhoanSimpleResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -50,6 +51,7 @@ public class TaiKhoanService {
         taiKhoan.setPassword(passwordEncoder.encode(request.getPassword()));
         taiKhoan.setEmail(request.getEmail());
         taiKhoan.setRole(request.getRole());
+        taiKhoan.setNgayCapNhat(LocalDateTime.now());
         return repository.save(taiKhoan);
     }
     public void delete(Integer id) {
@@ -72,5 +74,20 @@ public class TaiKhoanService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
         taiKhoan.setTrangThai(1);
         return repository.save(taiKhoan);
+    }
+
+    public List<TaiKhoanSimpleResponse> getSimple() {
+
+        return repository.findAll()
+                .stream()
+                .map(tk -> new TaiKhoanSimpleResponse(
+
+                        tk.getIdTaiKhoan(),
+
+                        tk.getUsername()
+
+                ))
+                .toList();
+
     }
 }

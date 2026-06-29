@@ -1,16 +1,23 @@
 package com.example.datn.nhan_vien.entity;
 
 import com.example.datn.tai_khoan.entity.TaiKhoan;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Entity
-@Table(name = "NHAN_VIEN")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Entity
+@Table(name = "NHAN_VIEN")
 public class NhanVien {
 
     @Id
@@ -29,6 +36,9 @@ public class NhanVien {
 
     @Column(name = "chuc_vu")
     private String chucVu;
+
+    @Column(name = "trang_thai")
+    private Integer trangThai;
 
     @OneToOne
     @JoinColumn(name = "id_tai_khoan")

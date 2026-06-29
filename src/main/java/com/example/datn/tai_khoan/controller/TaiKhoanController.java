@@ -1,8 +1,10 @@
 package com.example.datn.tai_khoan.controller;
 
+import com.example.datn.common.ApiResponse;
 import com.example.datn.tai_khoan.dto.TaiKhoanRequest;
 import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.example.datn.tai_khoan.service.TaiKhoanService;
+import com.example.datn.tai_khoan.dto.TaiKhoanSimpleResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
@@ -56,5 +58,17 @@ public class TaiKhoanController {
         return service.unlock(id);
     }
 
+
+    @GetMapping("/simple")
+    public ApiResponse<List<TaiKhoanSimpleResponse>> getSimple() {
+
+        return new ApiResponse<>(
+                200,
+                "Lấy danh sách tài khoản",
+               service.getSimple()
+
+        );
+
+    }
 
 }

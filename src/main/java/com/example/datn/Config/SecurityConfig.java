@@ -22,20 +22,33 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
+
         http
                 .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register")
+
+                        // Auth
+                        .requestMatchers("/api/auth/**")
                         .permitAll()
 
+                        // Tài khoản
                         .requestMatchers("/api/tai-khoan/**")
                         .hasRole("ADMIN")
 
-                        .anyRequest().authenticated()
+                        // Nhân viên
+                        .requestMatchers("/api/nhan-vien/**")
+                        .hasRole("ADMIN")
+
+                        // Khách hàng
+                        .requestMatchers("/api/khach-hang/**")
+                        .hasRole("ADMIN")
+
+                        // Các API còn lại
+                        .anyRequest()
+                        .authenticated()
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,

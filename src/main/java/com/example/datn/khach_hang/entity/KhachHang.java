@@ -4,13 +4,14 @@ import com.example.datn.tai_khoan.entity.TaiKhoan;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "KHACH_HANG")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class KhachHang {
 
     @Id
@@ -29,6 +30,15 @@ public class KhachHang {
 
     @Column(name = "dia_chi")
     private String diaChi;
+
+    @Column(name = "gioi_tinh")
+    private Boolean gioiTinh;
+
+    @Column(name = "trang_thai")
+    private Integer trangThai;
+
+    @Column(name = "ngay_sinh")
+    private LocalDate ngaySinh;
 
     @Column(name = "diem_tich_luy")
     private Integer diemTichLuy;
