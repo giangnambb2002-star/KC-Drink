@@ -1,6 +1,7 @@
 package com.example.datn.khach_hang.service;
 
 import com.example.datn.common.PageResponse;
+import com.example.datn.dia_chi.repository.DiaChiRepository;
 import com.example.datn.khach_hang.dto.KhachHangRequest;
 import com.example.datn.khach_hang.dto.KhachHangResponse;
 import com.example.datn.khach_hang.entity.KhachHang;
@@ -23,6 +24,7 @@ public class KhachHangService {
 
     private final KhachHangRepository repository;
     private final TaiKhoanRepository taiKhoanRepository;
+    private final DiaChiRepository diaChiRepository;
 
 
     public PageResponse<KhachHangResponse> getAll(
@@ -78,7 +80,6 @@ public class KhachHangService {
         khachHang.setTenKhachHang(request.getTenKhachHang());
         khachHang.setSdt(request.getSdt());
         khachHang.setEmail(request.getEmail());
-        khachHang.setDiaChi(request.getDiaChi());
         khachHang.setGioiTinh(request.getGioiTinh());
         khachHang.setNgaySinh(request.getNgaySinh());
         khachHang.setDiemTichLuy(0);
@@ -106,7 +107,6 @@ public class KhachHangService {
         khachHang.setTenKhachHang(request.getTenKhachHang());
         khachHang.setSdt(request.getSdt());
         khachHang.setEmail(request.getEmail());
-        khachHang.setDiaChi(request.getDiaChi());
         khachHang.setGioiTinh(request.getGioiTinh());
         khachHang.setNgaySinh(request.getNgaySinh());
         khachHang.setTaiKhoan(taiKhoan);
@@ -118,7 +118,8 @@ public class KhachHangService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
         khachHang.setTrangThai(0);
         if (khachHang.getIdKhachHang() == 7) {
-            throw new RuntimeException("Không được khóa khách lẻ");
+            throw new RuntimeException("K" +
+                    "không được khóa khách lẻ");
         }
         return toResponse(repository.save(khachHang));
     }
@@ -139,20 +140,30 @@ public class KhachHangService {
         response.setTenKhachHang(khachHang.getTenKhachHang());
         response.setSdt(khachHang.getSdt());
         response.setEmail(khachHang.getEmail());
-        response.setDiaChi(khachHang.getDiaChi());
         response.setGioiTinh(khachHang.getGioiTinh());
         response.setNgaySinh(khachHang.getNgaySinh());
         response.setTrangThai(khachHang.getTrangThai());
         response.setDiemTichLuy(khachHang.getDiemTichLuy());
 
         if (khachHang.getTaiKhoan() != null) {
+
             response.setIdTaiKhoan(
                     khachHang.getTaiKhoan().getIdTaiKhoan()
             );
+
             response.setUsername(
                     khachHang.getTaiKhoan().getUsername()
             );
+
         }
+        diaChiRepository
+                .findDefault(khachHang.getIdKhachHang())
+                .ifPresent(item ->
+                        response.setDiaChiMacDinh(
+                                item.getDiaChi()
+                        )
+                );
+
         return response;
     }
     public KhachHangResponse findByPhone(String sdt) {

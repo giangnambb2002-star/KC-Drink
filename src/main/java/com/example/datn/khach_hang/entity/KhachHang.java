@@ -1,10 +1,12 @@
 package com.example.datn.khach_hang.entity;
 
+import com.example.datn.dia_chi.entity.DiaChiKhachHang;
 import com.example.datn.tai_khoan.entity.TaiKhoan;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "KHACH_HANG")
@@ -28,8 +30,8 @@ public class KhachHang {
     @Column(name = "email")
     private String email;
 
-    @Column(name = "dia_chi")
-    private String diaChi;
+//    @Column(name = "dia_chi")
+//    private String diaChi;
 
     @Column(name = "gioi_tinh")
     private Boolean gioiTinh;
@@ -46,4 +48,6 @@ public class KhachHang {
     @OneToOne
     @JoinColumn(name = "id_tai_khoan")
     private TaiKhoan taiKhoan;
+    @OneToMany(mappedBy = "khachHang")
+    private List<DiaChiKhachHang> diaChiList;
 }

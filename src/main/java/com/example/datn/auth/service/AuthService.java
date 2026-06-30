@@ -69,7 +69,7 @@ public class AuthService {
         String tenNguoiDung = null;
         String chucVu = null;
         Integer diemTichLuy = null;
-        if ("STAFF".equals(taiKhoan.getRole())) {
+        if ("STAFF".equals(taiKhoan.getRole()) || "ADMIN".equals(taiKhoan.getRole())) {
             var nhanVien = nhanVienRepository.findByTaiKhoan(taiKhoan);
             if (nhanVien.isPresent()) {
                 tenNguoiDung = nhanVien.get().getTenNhanVien();

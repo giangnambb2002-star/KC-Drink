@@ -1,6 +1,7 @@
 package com.example.datn.nhan_vien.service;
 
 import com.example.datn.nhan_vien.dto.NhanVienRequest;
+import com.example.datn.nhan_vien.dto.NhanVienUpdateRequest;
 import com.example.datn.nhan_vien.entity.NhanVien;
 import com.example.datn.common.PageResponse;
 import com.example.datn.nhan_vien.dto.NhanVienResponse;
@@ -70,15 +71,15 @@ public class NhanVienService {
         if (nhanVienRepository.findBySdt(request.getSdt()).isPresent()) {
             throw new RuntimeException("Số điện thoại đã tồn tại");
         }
-
         if (nhanVienRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email đã tồn tại");
         }
-
         if (taiKhoanRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Tên đăng nhập đã tồn tại");
         }
-
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new RuntimeException("Mật khẩu không được để trống");
+        }
         if (taiKhoanRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email tài khoản đã tồn tại");
         }
@@ -112,7 +113,7 @@ public class NhanVienService {
     }
     public NhanVienResponse update(
             Integer id,
-            NhanVienRequest request
+            NhanVienUpdateRequest request
     ) {
 
         NhanVien nhanVien = nhanVienRepository.findById(id)
@@ -146,7 +147,6 @@ public class NhanVienService {
         );
 
         TaiKhoan taiKhoan = nhanVien.getTaiKhoan();
-
         taiKhoan.setEmail(request.getEmail());
         taiKhoan.setRole(request.getChucVu());
 

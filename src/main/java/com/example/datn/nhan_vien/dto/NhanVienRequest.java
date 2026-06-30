@@ -30,7 +30,7 @@ public class NhanVienRequest {
     @Size(min = 5, max = 30)
     private String username;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
+//    @NotBlank(message = "Mật khẩu không được để trống")
     @Size(min = 6, message = "Mật khẩu tối thiểu 6 ký tự")
     private String password;
 }

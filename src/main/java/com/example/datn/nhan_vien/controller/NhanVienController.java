@@ -4,6 +4,7 @@ import com.example.datn.common.ApiResponse;
 import com.example.datn.common.PageResponse;
 import com.example.datn.nhan_vien.dto.NhanVienRequest;
 import com.example.datn.nhan_vien.dto.NhanVienResponse;
+import com.example.datn.nhan_vien.dto.NhanVienUpdateRequest;
 import com.example.datn.nhan_vien.service.NhanVienService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +69,7 @@ public class NhanVienController {
     @PutMapping("/{id}")
     public ApiResponse<NhanVienResponse> update(
             @PathVariable Integer id,
-            @Valid @RequestBody NhanVienRequest request) {
+            @Valid @RequestBody NhanVienUpdateRequest request) {
 
         return new ApiResponse<>(
                 200,
@@ -76,7 +77,6 @@ public class NhanVienController {
                 service.update(id, request)
         );
     }
-
     @PatchMapping("/{id}/lock")
     public ApiResponse<NhanVienResponse> lock(@PathVariable Integer id) {
         return new ApiResponse<>(

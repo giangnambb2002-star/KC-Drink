@@ -1,9 +1,13 @@
 package com.example.datn.khach_hang.dto;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 
+@Getter
+@Setter
 @Data
 public class KhachHangResponse {
 
@@ -11,12 +15,11 @@ public class KhachHangResponse {
     private String tenKhachHang;
     private String sdt;
     private String email;
-    private String diaChi;
+    private String diaChiMacDinh;
     private Boolean gioiTinh;
     private LocalDate ngaySinh;
     private Integer diemTichLuy;
     private Integer trangThai;
-
     private Integer idTaiKhoan;
     private String username;
 }

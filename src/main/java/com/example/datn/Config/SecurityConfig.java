@@ -44,8 +44,9 @@ public class SecurityConfig {
 
                         // Khách hàng
                         .requestMatchers("/api/khach-hang/**")
-                        .hasRole("ADMIN")
-
+                        .hasAnyRole("ADMIN" , "STAFF")
+                        .requestMatchers("/api/dia-chi/**")
+                        .hasAnyRole("ADMIN" ,"STAFF")
                         // Các API còn lại
                         .anyRequest()
                         .authenticated()
