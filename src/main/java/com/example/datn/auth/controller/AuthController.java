@@ -5,6 +5,7 @@ import com.example.datn.auth.dto.RegisterRequest;
 import com.example.datn.auth.service.AuthService;
 import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.example.datn.common.ApiResponse;
+import com.example.datn.auth.dto.ForgotPasswordRequest;
 import com.example.datn.auth.dto.ChangePasswordRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -73,6 +74,19 @@ public class AuthController {
                 new ApiResponse<>(
                         200,
                         "Đổi mật khẩu thành công",
+                        null
+                )
+        );
+    }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request
+    ) {
+        authService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        200,
+                        "Mật khẩu mới đã được gửi đến email của bạn",
                         null
                 )
         );

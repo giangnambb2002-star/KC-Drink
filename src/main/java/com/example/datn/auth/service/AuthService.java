@@ -1,9 +1,14 @@
 package com.example.datn.auth.service;
+
 import com.example.datn.auth.dto.LoginRequest;
 import com.example.datn.auth.dto.MeResponse;
 import com.example.datn.auth.dto.RegisterRequest;
 import com.example.datn.auth.dto.ChangePasswordRequest;
+import com.example.datn.khach_hang.entity.KhachHang; // Thêm import Entity KhachHang
 import com.example.datn.khach_hang.repository.KhachHangRepository;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import java.util.UUID;
 import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.example.datn.tai_khoan.repository.TaiKhoanRepository;
 import com.example.datn.nhan_vien.repository.NhanVienRepository;
@@ -19,8 +24,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final NhanVienRepository nhanVienRepository;
-
     private final KhachHangRepository khachHangRepository;
+    private final JavaMailSender mailSender;
 
     public void register(RegisterRequest request) {
 
@@ -28,20 +33,43 @@ public class AuthService {
             throw new RuntimeException("Username đã tồn tại");
         }
 
+        // 1. TẠO VÀ LƯU TÀI KHOẢN
         TaiKhoan taiKhoan = new TaiKhoan();
-
         taiKhoan.setUsername(request.getUsername());
         taiKhoan.setEmail(request.getEmail());
-
-        // Mã hóa mật khẩu
-        taiKhoan.setPassword(
-                passwordEncoder.encode(request.getPassword())
-        );
-
+        taiKhoan.setPassword(passwordEncoder.encode(request.getPassword()));
         taiKhoan.setRole("USER");
         taiKhoan.setTrangThai(1);
 
-        repository.save(taiKhoan);
+        TaiKhoan savedTaiKhoan = repository.save(taiKhoan);
+
+        // 2. TẠO VÀ LƯU HỒ SƠ KHÁCH HÀNG (Map đúng theo file KhachHang.java)
+        KhachHang khachHang = new KhachHang();
+        khachHang.setTenKhachHang("Khách hàng " + request.getUsername());
+        khachHang.setSdt(request.getUsername());
+        khachHang.setEmail(request.getEmail());
+        khachHang.setDiemTichLuy(0);
+        khachHang.setTrangThai(1);
+        khachHang.setTaiKhoan(savedTaiKhoan);
+
+        khachHangRepository.save(khachHang);
+
+        // 3. GỬI MAIL CHÀO MỪNG
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(request.getEmail());
+            message.setSubject("[KC Drink] Đăng ký tài khoản thành công!");
+            message.setText("Xin chào,\n\n" +
+                    "Chào mừng bạn đến với hệ thống đặt hàng online của KC Drink.\n" +
+                    "Tài khoản của bạn đã được tạo thành công với thông tin sau:\n\n" +
+                    "- Tên đăng nhập / Số điện thoại: " + request.getUsername() + "\n" +
+                    "- Email: " + request.getEmail() + "\n\n" +
+                    "Bây giờ bạn có thể đăng nhập vào website để đặt món và bắt đầu tích lũy điểm thưởng nhé!\n\n" +
+                    "Trân trọng,\nĐội ngũ KC Drink.");
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.out.println("Lỗi gửi mail chào mừng: " + e.getMessage());
+        }
     }
 
     public String login(LoginRequest request) {
@@ -63,6 +91,7 @@ public class AuthService {
                 taiKhoan.getUsername()
         );
     }
+
     public MeResponse getCurrentUser(
             TaiKhoan taiKhoan
     ) {
@@ -93,6 +122,7 @@ public class AuthService {
                 diemTichLuy
         );
     }
+
     public void changePassword(
             TaiKhoan taiKhoan,
             ChangePasswordRequest request
@@ -108,5 +138,25 @@ public class AuthService {
         taiKhoan.setPassword(passwordEncoder.encode(request.getNewPassword())
         );
         repository.save(taiKhoan);
+    }
+
+    public void forgotPassword(String email) {
+        TaiKhoan taiKhoan = repository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống"));
+
+        String newPassword = UUID.randomUUID().toString().substring(0, 8);
+        taiKhoan.setPassword(passwordEncoder.encode(newPassword));
+        repository.save(taiKhoan);
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject("[Hệ Thống] Cấp lại mật khẩu mới");
+        message.setText("Xin chào,\n\n" +
+                "Hệ thống đã nhận được yêu cầu cấp lại mật khẩu của bạn.\n" +
+                "Tên đăng nhập / Số điện thoại của bạn: " + taiKhoan.getUsername() + "\n" +
+                "Mật khẩu mới của bạn là: " + newPassword + "\n\n" +
+                "Vui lòng đăng nhập và đổi lại mật khẩu ngay lập tức để bảo mật tài khoản.\n" +
+                "Trân trọng!");
+        mailSender.send(message);
     }
 }
