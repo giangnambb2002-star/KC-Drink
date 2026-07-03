@@ -16,6 +16,7 @@ public interface KhachHangRepository
 
     Optional<KhachHang> findByTaiKhoan(TaiKhoan taiKhoan);
     Optional<KhachHang> findBySdt(String sdt);
+    Optional<KhachHang> findByEmail(String email);
     Page<KhachHang> findByTenKhachHangContainingIgnoreCaseOrSdtContaining(
             String ten,
             String sdt,
@@ -29,4 +30,8 @@ public interface KhachHangRepository
             @Param("trangThai") Integer trangThai,
             Pageable pageable
     );
+    // ================ THÊM MỚI TẠI ĐÂY ================
+    @Query(value = "SELECT * FROM KHACH_HANG WHERE DAY(ngay_sinh) = :day AND MONTH(ngay_sinh) = :month AND trang_thai = 1", nativeQuery = true)
+    List<KhachHang> findKhachHangSinhNhat(@Param("day") int day, @Param("month") int month);
+
 }

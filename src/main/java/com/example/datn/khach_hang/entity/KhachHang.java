@@ -50,4 +50,8 @@
         private TaiKhoan taiKhoan;
         @OneToMany(mappedBy = "khachHang")
         private List<DiaChiKhachHang> diaChiList;
+
+        // ================ THÊM MỚI TẠI ĐÂY (VOUCHER MODULE) ================
+        @Column(name = "nam_nhan_voucher_sn")
+        private Integer namNhanVoucherSn;
     }

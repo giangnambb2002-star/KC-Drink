@@ -75,44 +75,30 @@ public class KhachHangService {
 
         TaiKhoan taiKhoan = null;
 
-        // LUỒNG MỚI: Tự động tạo tài khoản nếu không truyền lên idTaiKhoan
         if (request.getIdTaiKhoan() != null) {
             taiKhoan = taiKhoanRepository.findById(request.getIdTaiKhoan())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
         } else {
-            // 1. Kiểm tra xem SĐT này đã có trong bảng TaiKhoan chưa
             if (taiKhoanRepository.existsByUsername(request.getSdt())) {
                 throw new RuntimeException("Số điện thoại này đã được đăng ký tài khoản trên hệ thống");
             }
-
-            // 2. Kiểm tra email (nếu có nhập) đã tồn tại chưa
             if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
                 if (taiKhoanRepository.existsByEmail(request.getEmail())) {
                     throw new RuntimeException("Email này đã được sử dụng cho một tài khoản khác");
                 }
             }
-
-            // 3. Tạo tài khoản mới
             taiKhoan = new TaiKhoan();
             taiKhoan.setUsername(request.getSdt()); // Lấy SĐT làm Tên đăng nhập
             taiKhoan.setEmail(request.getEmail());
             taiKhoan.setRole("USER");
             taiKhoan.setTrangThai(1);
-
-            // Sinh mật khẩu ngẫu nhiên (8 ký tự)
             String rawPassword = UUID.randomUUID().toString().substring(0, 8);
             taiKhoan.setPassword(passwordEncoder.encode(rawPassword));
-
-            // Lưu tài khoản vào DB
             taiKhoan = taiKhoanRepository.save(taiKhoan);
-
-            // 4. Gửi email mật khẩu cho khách (nếu khách có cung cấp email)
             if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
                 sendWelcomeEmail(request.getEmail(), request.getSdt(), rawPassword);
             }
         }
-
-        // Tạo hồ sơ khách hàng và gắn với tài khoản
         KhachHang khachHang = new KhachHang();
         khachHang.setTenKhachHang(request.getTenKhachHang());
         khachHang.setSdt(request.getSdt());
@@ -120,7 +106,7 @@ public class KhachHangService {
         khachHang.setGioiTinh(request.getGioiTinh());
         khachHang.setNgaySinh(request.getNgaySinh());
         khachHang.setDiemTichLuy(0);
-        khachHang.setTaiKhoan(taiKhoan); // Gắn tài khoản vừa tạo
+        khachHang.setTaiKhoan(taiKhoan);
         khachHang.setTrangThai(1);
 
         return toResponse(repository.save(khachHang));
@@ -129,16 +115,35 @@ public class KhachHangService {
     public KhachHangResponse update(Integer id, KhachHangRequest request) {
         KhachHang khachHang = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
-        TaiKhoan taiKhoan = null;
+
+        // 1. Kiểm tra trùng SĐT
+        Optional<KhachHang> existingSdt = repository.findBySdt(request.getSdt());
+        if (existingSdt.isPresent() && !existingSdt.get().getIdKhachHang().equals(id)) {
+            throw new RuntimeException("Số điện thoại đã tồn tại");
+        }
+
+        // 2. [ĐÃ THÊM] Kiểm tra trùng Email
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            Optional<KhachHang> existingEmail = repository.findByEmail(request.getEmail().trim());
+            if (existingEmail.isPresent() && !existingEmail.get().getIdKhachHang().equals(id)) {
+                throw new RuntimeException("Email này đã được sử dụng cho một khách hàng khác");
+            }
+        }
+
+        // 3. Xử lý tài khoản (Chống mất nick + Vá lỗi Quên mật khẩu)
+        TaiKhoan taiKhoan = khachHang.getTaiKhoan();
+
         if (request.getIdTaiKhoan() != null) {
             taiKhoan = taiKhoanRepository.findById(request.getIdTaiKhoan())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
         }
-        Optional<KhachHang> existing = repository.findBySdt(request.getSdt());
 
-        if (existing.isPresent() && !existing.get().getIdKhachHang().equals(id)) {
-            throw new RuntimeException("Số điện thoại đã tồn tại");
+        if (taiKhoan != null && request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            taiKhoan.setEmail(request.getEmail().trim());
+            taiKhoanRepository.save(taiKhoan);
         }
+
+        // 4. Cập nhật thông tin Khách hàng
         khachHang.setTenKhachHang(request.getTenKhachHang());
         khachHang.setSdt(request.getSdt());
         khachHang.setEmail(request.getEmail());
@@ -153,7 +158,7 @@ public class KhachHangService {
         KhachHang khachHang = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
         khachHang.setTrangThai(0);
-        if (khachHang.getIdKhachHang() == 7) {
+        if (khachHang.getIdKhachHang() == 1) {
             throw new RuntimeException("Không được khóa khách lẻ");
         }
         return toResponse(repository.save(khachHang));
