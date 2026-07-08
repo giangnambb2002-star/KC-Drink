@@ -2,9 +2,11 @@ package com.example.datn.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class MeResponse {
 
     private Integer idTaiKhoan;
@@ -20,4 +22,7 @@ public class MeResponse {
     private String chucVu;
 
     private Integer diemTichLuy;
+
+    private Integer idNhanVien;
+    private String tenNhanVien;
 }

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+
 public class AuthService {
 
     private final TaiKhoanRepository repository;
@@ -92,17 +93,18 @@ public class AuthService {
         );
     }
 
-    public MeResponse getCurrentUser(
-            TaiKhoan taiKhoan
-    ) {
+    public MeResponse getCurrentUser(TaiKhoan taiKhoan) {
         String tenNguoiDung = null;
         String chucVu = null;
         Integer diemTichLuy = null;
+        Integer idNhanVien = null; // BƯỚC 1: Khai báo thêm biến để hứng ID nhân viên
+
         if ("STAFF".equals(taiKhoan.getRole()) || "ADMIN".equals(taiKhoan.getRole())) {
             var nhanVien = nhanVienRepository.findByTaiKhoan(taiKhoan);
             if (nhanVien.isPresent()) {
                 tenNguoiDung = nhanVien.get().getTenNhanVien();
                 chucVu = nhanVien.get().getChucVu();
+                idNhanVien = nhanVien.get().getIdNhanVien(); // BƯỚC 2: Lấy ID từ database ra
             }
         }
         if ("USER".equals(taiKhoan.getRole())) {
@@ -112,17 +114,20 @@ public class AuthService {
                 diemTichLuy = khachHang.get().getDiemTichLuy();
             }
         }
-        return new MeResponse(
-                taiKhoan.getIdTaiKhoan(),
-                taiKhoan.getUsername(),
-                taiKhoan.getEmail(),
-                taiKhoan.getRole(),
-                tenNguoiDung,
-                chucVu,
-                diemTichLuy
-        );
-    }
 
+        // BƯỚC 3: Dùng Setter thay cho Constructor để tránh lỗi thiếu/sai thứ tự tham số
+        MeResponse response = new MeResponse();
+        response.setIdTaiKhoan(taiKhoan.getIdTaiKhoan());
+        response.setUsername(taiKhoan.getUsername());
+        response.setEmail(taiKhoan.getEmail());
+        response.setRole(taiKhoan.getRole());
+        response.setTenNguoiDung(tenNguoiDung);
+        response.setChucVu(chucVu);
+        response.setDiemTichLuy(diemTichLuy);
+        response.setIdNhanVien(idNhanVien); // Nhét thẻ nhân viên vào đây để gửi về Vue!
+
+        return response;
+    }
     public void changePassword(
             TaiKhoan taiKhoan,
             ChangePasswordRequest request
