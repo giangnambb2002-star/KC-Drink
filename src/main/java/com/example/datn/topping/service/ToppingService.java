@@ -4,6 +4,7 @@ import com.example.datn.common.PageResponse;
 import com.example.datn.topping.dto.ToppingRequest;
 import com.example.datn.topping.dto.ToppingResponse;
 import com.example.datn.topping.entity.Topping;
+import com.example.datn.topping.repository.LoToppingRepository;
 import com.example.datn.topping.repository.ToppingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,11 +13,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 public class ToppingService {
 
     private final ToppingRepository repository;
+
+    private final LoToppingRepository loToppingRepository;
 
     public PageResponse<ToppingResponse> getAll(
             String keyword,
@@ -112,9 +117,9 @@ public class ToppingService {
         response.setTenTopping(topping.getTenTopping());
         response.setGiaTopping(topping.getGiaTopping());
         response.setTrangThai(topping.getTrangThai());
+        BigDecimal tongTonKhoConHan = loToppingRepository.getTongTonKhoConHan(topping.getIdTopping());
+        response.setTongTonKho(tongTonKhoConHan != null ? tongTonKhoConHan.intValue() : 0);
 
-        // 👉 Đã sửa thành getTongTonKho / setTongTonKho
-        response.setTongTonKho(topping.getTongTonKho());
 
         return response;
     }

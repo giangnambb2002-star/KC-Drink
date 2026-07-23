@@ -40,13 +40,21 @@ public class LoToppingController {
         );
     }
 
-    @PatchMapping("/{id}/status")
-    public ApiResponse<LoToppingResponse> updateStatus(
-            @PathVariable Integer id,
-            @RequestParam Integer trangThai) {
+    // 🔒 KHÓA LÔ TOPPING
+    @PutMapping("/{id}/lock")
+    public ApiResponse<LoToppingResponse> lock(@PathVariable Integer id) {
         return new ApiResponse<>(
-                200, "Cập nhật trạng thái lô Topping thành công",
-                service.updateStatus(id, trangThai)
+                200, "Khóa lô Topping thành công",
+                service.lock(id)
+        );
+    }
+
+    // 🔓 MỞ KHÓA LÔ TOPPING
+    @PutMapping("/{id}/unlock")
+    public ApiResponse<LoToppingResponse> unlock(@PathVariable Integer id) {
+        return new ApiResponse<>(
+                200, "Mở khóa lô Topping thành công",
+                service.unlock(id)
         );
     }
 }

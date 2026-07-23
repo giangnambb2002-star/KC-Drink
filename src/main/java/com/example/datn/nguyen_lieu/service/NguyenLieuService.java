@@ -4,6 +4,7 @@ import com.example.datn.common.PageResponse;
 import com.example.datn.nguyen_lieu.dto.NguyenLieuRequest;
 import com.example.datn.nguyen_lieu.dto.NguyenLieuResponse;
 import com.example.datn.nguyen_lieu.entity.NguyenLieu;
+import com.example.datn.nguyen_lieu.repository.LoNguyenLieuRepository;
 import com.example.datn.nguyen_lieu.repository.NguyenLieuRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,11 +13,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 public class NguyenLieuService {
 
     private final NguyenLieuRepository repository;
+
+    private final LoNguyenLieuRepository loNguyenLieuRepository;
 
     // Phân trang + Tìm kiếm + Sắp xếp y hệt Leader
     public PageResponse<NguyenLieuResponse> getAll(
@@ -58,6 +63,7 @@ public class NguyenLieuService {
         nguyenLieu.setTenNguyenLieu(request.getTenNguyenLieu());
         nguyenLieu.setDonViTinh(request.getDonViTinh());
         nguyenLieu.setTrangThai(1);
+        nguyenLieu.setNguongTonKho(request.getNguongTonKho());
         return toResponse(repository.save(nguyenLieu));
     }
 
@@ -69,6 +75,7 @@ public class NguyenLieuService {
         }
         nguyenLieu.setTenNguyenLieu(request.getTenNguyenLieu());
         nguyenLieu.setDonViTinh(request.getDonViTinh());
+        nguyenLieu.setNguongTonKho(request.getNguongTonKho());
         if (request.getTrangThai() != null) {
             nguyenLieu.setTrangThai(request.getTrangThai());
         }
@@ -98,7 +105,9 @@ public class NguyenLieuService {
         response.setTenNguyenLieu(nguyenLieu.getTenNguyenLieu());
         response.setDonViTinh(nguyenLieu.getDonViTinh());
         response.setTrangThai(nguyenLieu.getTrangThai());
-        response.setTongTonKho(nguyenLieu.getTongTonKho());
+        BigDecimal tongTonKhoConHan = loNguyenLieuRepository.getTongTonKhoConHan(nguyenLieu.getIdNguyenLieu());
+        response.setTongTonKho(tongTonKhoConHan != null ? tongTonKhoConHan : BigDecimal.ZERO);
+        response.setNguongTonKho(nguyenLieu.getNguongTonKho());
         return response;
     }
 }

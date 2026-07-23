@@ -16,4 +16,5 @@ public class LoNguyenLieuResponse {
     private LocalDate hanSuDung;
     private LocalDateTime ngayNhap;
     private Integer trangThai;
+    private String trangThaiHsd;
 }

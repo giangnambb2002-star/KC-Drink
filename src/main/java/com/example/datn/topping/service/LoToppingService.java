@@ -27,6 +27,8 @@ public class LoToppingService {
     private final ToppingRepository toppingRepository;
     private final NhanVienRepository nhanVienRepository;
 
+    
+
     public PageResponse<LoToppingResponse> getAll(
             Integer idTopping, Integer trangThai, int page, int size, String sortBy, String direction
     ) {
@@ -72,11 +74,59 @@ public class LoToppingService {
         return toResponse(savedLo);
     }
 
-    public LoToppingResponse updateStatus(Integer id, Integer trangThai) {
+    @Transactional
+    public LoToppingResponse lock(Integer id) {
         LoTopping lo = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy lô Topping"));
-        lo.setTrangThai(trangThai);
-        return toResponse(repository.save(lo));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lô Topping với ID: " + id));
+
+        // Kiểm tra nếu lô đã bị khóa trước đó thì không trừ trùng lặp
+        if (lo.getTrangThai() != null && lo.getTrangThai() == 0) {
+            return toResponse(lo);
+        }
+
+        // 1. Đổi trạng thái lô về 0 (Đã khóa)
+        lo.setTrangThai(0);
+        LoTopping savedLo = repository.save(lo);
+
+        // 2. Trừ số lượng tồn của lô này khỏi Tổng tồn kho Topping gốc
+        Topping topping = lo.getTopping();
+        if (topping != null) {
+            int currentTon = topping.getTongTonKho() != null ? topping.getTongTonKho() : 0;
+            int loTon = lo.getSoLuongTon() != null ? lo.getSoLuongTon() : 0;
+
+            topping.setTongTonKho(Math.max(0, currentTon - loTon)); // Đảm bảo không âm
+            toppingRepository.save(topping);
+        }
+
+        return toResponse(savedLo);
+    }
+
+    // 🔓 MỞ KHÓA LÔ TOPPING (Cộng trả lại tổng tồn kho)
+    @Transactional
+    public LoToppingResponse unlock(Integer id) {
+        LoTopping lo = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lô Topping với ID: " + id));
+
+        // Kiểm tra nếu lô đã ở trạng thái mở khóa thì không cộng trùng lặp
+        if (lo.getTrangThai() != null && lo.getTrangThai() == 1) {
+            return toResponse(lo);
+        }
+
+        // 1. Đổi trạng thái lô về 1 (Khả dụng)
+        lo.setTrangThai(1);
+        LoTopping savedLo = repository.save(lo);
+
+        // 2. Cộng trả lại số lượng tồn của lô này vào Tổng tồn kho Topping gốc
+        Topping topping = lo.getTopping();
+        if (topping != null) {
+            int currentTon = topping.getTongTonKho() != null ? topping.getTongTonKho() : 0;
+            int loTon = lo.getSoLuongTon() != null ? lo.getSoLuongTon() : 0;
+
+            topping.setTongTonKho(currentTon + loTon);
+            toppingRepository.save(topping);
+        }
+
+        return toResponse(savedLo);
     }
 
     private LoToppingResponse toResponse(LoTopping lo) {

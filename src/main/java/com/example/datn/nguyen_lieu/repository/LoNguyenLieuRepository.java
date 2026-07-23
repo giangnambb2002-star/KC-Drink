@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface LoNguyenLieuRepository extends JpaRepository<LoNguyenLieu, Integer> {
@@ -25,4 +26,9 @@ public interface LoNguyenLieuRepository extends JpaRepository<LoNguyenLieu, Inte
             "AND l.soLuongTon > 0 AND l.trangThai = 1 AND l.hanSuDung >= CURRENT_DATE " +
             "ORDER BY l.hanSuDung ASC")
     List<LoNguyenLieu> findLoToUseFEFO(@Param("idNguyenLieu") Integer idNguyenLieu);
+    @Query("SELECT COALESCE(SUM(l.soLuongTon), 0) FROM LoNguyenLieu l " +
+            "WHERE l.nguyenLieu.idNguyenLieu = :idNguyenLieu " +
+            "AND (l.trangThai IS NULL OR l.trangThai = 1) " +
+            "AND (l.hanSuDung IS NULL OR l.hanSuDung >= CURRENT_DATE)")
+    BigDecimal getTongTonKhoConHan(@Param("idNguyenLieu") Integer idNguyenLieu);
 }

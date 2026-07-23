@@ -40,13 +40,20 @@ public class LoNguyenLieuController {
         );
     }
 
-    @PatchMapping("/{id}/status")
-    public ApiResponse<LoNguyenLieuResponse> updateStatus(
-            @PathVariable Integer id,
-            @RequestParam Integer trangThai) {
+    @PutMapping("/{id}/lock")
+    public ApiResponse<LoNguyenLieuResponse> lock(@PathVariable Integer id) {
         return new ApiResponse<>(
-                200, "Cập nhật trạng thái lô thành công",
-                service.updateStatus(id, trangThai)
+                200, "Khóa lô nguyên liệu thành công",
+                service.lock(id)
+        );
+    }
+
+    // 🔓 Mở khóa lô nguyên liệu
+    @PutMapping("/{id}/unlock")
+    public ApiResponse<LoNguyenLieuResponse> unlock(@PathVariable Integer id) {
+        return new ApiResponse<>(
+                200, "Mở khóa lô nguyên liệu thành công",
+                service.unlock(id)
         );
     }
 }

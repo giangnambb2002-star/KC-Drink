@@ -7,7 +7,6 @@ import com.example.datn.nguyen_lieu.entity.LoNguyenLieu;
 import com.example.datn.nguyen_lieu.entity.NguyenLieu;
 import com.example.datn.nguyen_lieu.repository.LoNguyenLieuRepository;
 import com.example.datn.nguyen_lieu.repository.NguyenLieuRepository;
-// Bổ sung import nhân viên (Bro nhớ check lại đúng đường dẫn package nhé)
 import com.example.datn.nhan_vien.entity.NhanVien;
 import com.example.datn.nhan_vien.repository.NhanVienRepository;
 import lombok.RequiredArgsConstructor;
@@ -64,11 +63,19 @@ public class LoNguyenLieuService {
         return toResponse(repository.save(lo));
     }
 
-    // Nghiệp vụ Kho hạn chế sửa số lượng lung tung, chỉ cho phép khóa lô nếu hỏng/hết hạn
-    public LoNguyenLieuResponse updateStatus(Integer id, Integer trangThai) {
+    // Khóa lô nguyên liệu (Ngừng sử dụng khi lô bị lỗi/hỏng)
+    public LoNguyenLieuResponse lock(Integer id) {
         LoNguyenLieu lo = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lô nguyên liệu"));
-        lo.setTrangThai(trangThai);
+        lo.setTrangThai(0);
+        return toResponse(repository.save(lo));
+    }
+
+    // Mở khóa lô nguyên liệu (Khôi phục trạng thái sử dụng)
+    public LoNguyenLieuResponse unlock(Integer id) {
+        LoNguyenLieu lo = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lô nguyên liệu"));
+        lo.setTrangThai(1);
         return toResponse(repository.save(lo));
     }
 
@@ -87,6 +94,19 @@ public class LoNguyenLieuService {
         // BỔ SUNG: Trả về tên nhân viên nhập để Frontend hiển thị lên Table
         if (lo.getNhanVien() != null) {
             response.setTenNhanVien(lo.getNhanVien().getTenNhanVien());
+        }
+        if (lo.getHanSuDung() != null) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            // Tính khoảng cách ngày bằng cách trừ epoch day (không lo thiếu import)
+            long days = lo.getHanSuDung().toEpochDay() - today.toEpochDay();
+
+            if (days < 0) {
+                response.setTrangThaiHsd("Hết hạn!");
+            } else if (days <= 7) {
+                response.setTrangThaiHsd("Sắp hết hạn");
+            } else {
+                response.setTrangThaiHsd("Còn hạn");
+            }
         }
 
         return response;
