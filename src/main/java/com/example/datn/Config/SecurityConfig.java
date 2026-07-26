@@ -66,7 +66,8 @@ public class SecurityConfig {
                                 "/api/nguyen-lieu/**",
                                 "/api/lo-nguyen-lieu/**",
                                 "/api/topping/**",
-                                "/api/lo-topping/**"
+                                "/api/lo-topping/**",
+                                "/api/lo-topping/import"
                         ).hasRole("ADMIN")
                         // Khóa chặt các API còn lại
                         .anyRequest().authenticated()

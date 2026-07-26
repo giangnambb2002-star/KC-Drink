@@ -10,6 +10,9 @@ import com.example.datn.topping.repository.ToppingRepository;
 import com.example.datn.nhan_vien.entity.NhanVien;
 import com.example.datn.nhan_vien.repository.NhanVienRepository;
 import lombok.RequiredArgsConstructor;
+import com.example.datn.common.ExcelHelper;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -146,5 +150,86 @@ public class LoToppingService {
         }
 
         return response;
+    }
+
+    // 📥 IMPORT BATCH LÔ TOPPING TỪ FILE EXCEL (CÓ CỘNG DỒN NẾU TRÙNG MÃ LÔ)
+    @Transactional(rollbackFor = Exception.class)
+    public void importExcelLoTopping(MultipartFile file, Integer idNhanVien) {
+        // 1. Kiểm tra nhân viên thực hiện Import (nếu có)
+        NhanVien nhanVien = null;
+        if (idNhanVien != null) {
+            nhanVien = nhanVienRepository.findById(idNhanVien)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin nhân viên thực hiện import!"));
+        }
+        final NhanVien nvImport = nhanVien;
+
+        // 2. Đọc dữ liệu từ file Excel thông qua ExcelHelper
+        List<LoTopping> dtoList = ExcelHelper.readExcel(file, row -> {
+            LoTopping lo = new LoTopping();
+
+            // Cột 0: Mã lô (String)
+            lo.setMaLo(ExcelHelper.getStringValue(row.getCell(0)));
+
+            // Cột 1: ID Topping gốc (Gán tạm ID vào entity Topping)
+            Integer idTopping = ExcelHelper.getIntegerValue(row.getCell(1));
+            Topping tempTopping = new Topping();
+            tempTopping.setIdTopping(idTopping);
+            lo.setTopping(tempTopping);
+
+            // Cột 2: Số lượng nhập
+            Integer soLuong = ExcelHelper.getIntegerValue(row.getCell(2));
+            lo.setSoLuongNhap(soLuong);
+            lo.setSoLuongTon(soLuong); // Lô mới nhập: Tồn = Nhập
+
+            // Cột 3: Hạn sử dụng (LocalDate)
+            lo.setHanSuDung(ExcelHelper.getLocalDateValue(row.getCell(3)));
+
+            // Set các thuộc tính mặc định
+            lo.setNgayNhap(LocalDateTime.now());
+            lo.setTrangThai(1); // 1: Khả dụng
+            lo.setNhanVien(nvImport);
+
+            return lo;
+        });
+        // 3. Kiểm tra nghiệp vụ & Lưu/Cập nhật vào DB
+        // 3. Kiểm tra nghiệp vụ & Lưu/Cập nhật vào DB
+        for (LoTopping lo : dtoList) {
+            // Validate: Bỏ qua dòng trống nếu không nhập mã lô
+            if (lo.getMaLo() == null || lo.getMaLo().trim().isEmpty()) {
+                continue;
+            }
+
+            // Check Topping gốc có tồn tại không
+            Integer idTopping = lo.getTopping().getIdTopping();
+            Topping topping = toppingRepository.findById(idTopping)
+                    .orElseThrow(() -> new RuntimeException("Lỗi file Excel: Không tìm thấy Topping gốc có ID = " + idTopping));
+
+            // 🔄 XỬ LÝ: KIỂM TRA TRÙNG MÃ LÔ
+            Optional<LoTopping> existingLoOpt = repository.findByMaLo(lo.getMaLo());
+
+            if (existingLoOpt.isPresent()) {
+                // 👉 TH 1: ĐÃ TỒN TẠI MÃ LÔ -> BỎ QUA (KHÔNG CỘNG DỒN, KHÔNG CẬP NHẬT GÌ CẢ)
+                LoTopping existingLo = existingLoOpt.get();
+
+                // Kiểm tra an toàn: Báo lỗi nếu mã lô trùng nhưng thuộc Topping khác
+                if (!existingLo.getTopping().getIdTopping().equals(idTopping)) {
+                    throw new RuntimeException("Lỗi file Excel: Mã lô [" + lo.getMaLo() + "] đã tồn tại nhưng thuộc về Topping khác!");
+                }
+
+                // ⛔ Bỏ qua dòng này, chuyển sang dòng tiếp theo luôn!
+                continue;
+
+            } else {
+                // 👉 TH 2: CHƯA TỒN TẠI MÃ LÔ -> THÊM LÔ MỚI
+                lo.setTopping(topping);
+                repository.save(lo);
+
+                // ➕ CHỈ CỘNG DỒN VÀO TỔNG TỒN KHO CỦA TOPPING KHI LÀ LÔ MỚI
+                int currentTonKho = topping.getTongTonKho() != null ? topping.getTongTonKho() : 0;
+                int importSoLuong = lo.getSoLuongNhap() != null ? lo.getSoLuongNhap() : 0;
+                topping.setTongTonKho(currentTonKho + importSoLuong);
+                toppingRepository.save(topping);
+            }
+        }
     }
 }
