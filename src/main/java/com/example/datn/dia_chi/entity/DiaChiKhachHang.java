@@ -41,4 +41,23 @@ public class DiaChiKhachHang {
     @Column(name = "trang_thai")
     private Integer trangThai;
 
+
+    @Column(name = "province_id")
+    private Integer provinceId;
+
+    @Column(name = "district_id")
+    private Integer districtId;
+
+    @Column(name = "ward_code")
+    private String wardCode;
+
+    @Column(name = "ten_tinh_thanh")
+    private String tenTinhThanh;
+
+    @Column(name = "ten_quan_huyen")
+    private String tenQuanHuyen;
+
+    @Column(name = "ten_phuong_xa")
+    private String tenPhuongXa;
+
 }

@@ -14,8 +14,9 @@ public class DiaChiRequest {
     @NotBlank(message = "Tên người nhận không được để trống")
     private String tenNguoiNhan;
 
+    @NotBlank(message = "Số điện thoại không được để trống")
     @Pattern(
-            regexp = "^0[3|5|7|8|9][0-9]{8}$",
+            regexp = "^0[35789][0-9]{8}$",
             message = "Số điện thoại không hợp lệ"
     )
     private String sdtNguoiNhan;
@@ -25,4 +26,21 @@ public class DiaChiRequest {
 
     private Boolean macDinh;
 
+    @NotNull(message = "Tỉnh/thành phố không được để trống")
+    private Integer provinceId;
+
+    @NotNull(message = "Quận/huyện không được để trống")
+    private Integer districtId;
+
+    @NotBlank(message = "Phường/xã không được để trống")
+    private String wardCode;
+
+    @NotBlank(message = "Tên tỉnh/thành phố không được để trống")
+    private String tenTinhThanh;
+
+    @NotBlank(message = "Tên quận/huyện không được để trống")
+    private String tenQuanHuyen;
+
+    @NotBlank(message = "Tên phường/xã không được để trống")
+    private String tenPhuongXa;
 }

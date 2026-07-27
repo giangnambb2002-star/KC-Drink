@@ -19,4 +19,16 @@ public class DiaChiResponse {
 
     private Integer trangThai;
 
+    private Integer provinceId;
+
+    private Integer districtId;
+
+    private String wardCode;
+
+    private String tenTinhThanh;
+
+    private String tenQuanHuyen;
+
+    private String tenPhuongXa;
+
 }

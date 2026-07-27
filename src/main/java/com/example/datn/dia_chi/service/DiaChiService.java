@@ -1,17 +1,17 @@
 package com.example.datn.dia_chi.service;
 
+import com.example.datn.common.PageResponse;
 import com.example.datn.dia_chi.dto.DiaChiRequest;
 import com.example.datn.dia_chi.dto.DiaChiResponse;
 import com.example.datn.dia_chi.entity.DiaChiKhachHang;
 import com.example.datn.dia_chi.repository.DiaChiRepository;
 import com.example.datn.khach_hang.entity.KhachHang;
 import com.example.datn.khach_hang.repository.KhachHangRepository;
-import com.example.datn.common.PageResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -56,6 +56,7 @@ public class DiaChiService {
         );
 
     }
+
     public DiaChiResponse getById(Integer id) {
 
         DiaChiKhachHang diaChi =
@@ -79,6 +80,7 @@ public class DiaChiService {
                     diaChiRepository.findAllByKhachHang_IdKhachHang(
                             request.getIdKhachHang()
                     );
+
             for (DiaChiKhachHang item : ds) {
 
                 item.setMacDinh(false);
@@ -90,24 +92,57 @@ public class DiaChiService {
         }
 
         DiaChiKhachHang diaChi = new DiaChiKhachHang();
+
         diaChi.setKhachHang(khachHang);
+
         diaChi.setTenNguoiNhan(
                 request.getTenNguoiNhan()
         );
+
         diaChi.setSdtNguoiNhan(
                 request.getSdtNguoiNhan()
         );
+
         diaChi.setDiaChi(
                 request.getDiaChi()
         );
+
+        diaChi.setProvinceId(
+                request.getProvinceId()
+        );
+
+        diaChi.setDistrictId(
+                request.getDistrictId()
+        );
+
+        diaChi.setWardCode(
+                request.getWardCode()
+        );
+
+        diaChi.setTenTinhThanh(
+                request.getTenTinhThanh()
+        );
+
+        diaChi.setTenQuanHuyen(
+                request.getTenQuanHuyen()
+        );
+
+        diaChi.setTenPhuongXa(
+                request.getTenPhuongXa()
+        );
+
         diaChi.setMacDinh(
                 request.getMacDinh()
         );
+
         diaChi.setTrangThai(1);
+
         return toResponse(
                 diaChiRepository.save(diaChi)
         );
+
     }
+
     public DiaChiResponse update(
             Integer id,
             DiaChiRequest request
@@ -128,6 +163,7 @@ public class DiaChiService {
                     diaChiRepository.findAllByKhachHang_IdKhachHang(
                             request.getIdKhachHang()
                     );
+
             for (DiaChiKhachHang item : ds) {
 
                 if (!item.getIdDiaChi().equals(id)) {
@@ -137,17 +173,47 @@ public class DiaChiService {
                     diaChiRepository.save(item);
 
                 }
+
             }
+
         }
+
         diaChi.setKhachHang(khachHang);
+
         diaChi.setTenNguoiNhan(
                 request.getTenNguoiNhan()
         );
+
         diaChi.setSdtNguoiNhan(
                 request.getSdtNguoiNhan()
         );
+
         diaChi.setDiaChi(
                 request.getDiaChi()
+        );
+
+        diaChi.setProvinceId(
+                request.getProvinceId()
+        );
+
+        diaChi.setDistrictId(
+                request.getDistrictId()
+        );
+
+        diaChi.setWardCode(
+                request.getWardCode()
+        );
+
+        diaChi.setTenTinhThanh(
+                request.getTenTinhThanh()
+        );
+
+        diaChi.setTenQuanHuyen(
+                request.getTenQuanHuyen()
+        );
+
+        diaChi.setTenPhuongXa(
+                request.getTenPhuongXa()
         );
 
         diaChi.setMacDinh(
@@ -180,15 +246,20 @@ public class DiaChiService {
     }
 
     public DiaChiResponse unlock(Integer id) {
+
         DiaChiKhachHang diaChi =
                 diaChiRepository.findById(id)
                         .orElseThrow(() ->
                                 new RuntimeException("Không tìm thấy địa chỉ"));
+
         diaChi.setTrangThai(1);
+
         return toResponse(
                 diaChiRepository.save(diaChi)
         );
+
     }
+
     public DiaChiResponse setDefault(Integer id) {
 
         DiaChiKhachHang diaChi =
@@ -202,16 +273,21 @@ public class DiaChiService {
                 );
 
         for (DiaChiKhachHang item : ds) {
+
             item.setMacDinh(false);
+
             diaChiRepository.save(item);
 
         }
+
         diaChi.setMacDinh(true);
+
         return toResponse(
                 diaChiRepository.save(diaChi)
         );
 
     }
+
     private DiaChiResponse toResponse(
             DiaChiKhachHang diaChi
     ) {
@@ -237,6 +313,30 @@ public class DiaChiService {
 
         response.setDiaChi(
                 diaChi.getDiaChi()
+        );
+
+        response.setProvinceId(
+                diaChi.getProvinceId()
+        );
+
+        response.setDistrictId(
+                diaChi.getDistrictId()
+        );
+
+        response.setWardCode(
+                diaChi.getWardCode()
+        );
+
+        response.setTenTinhThanh(
+                diaChi.getTenTinhThanh()
+        );
+
+        response.setTenQuanHuyen(
+                diaChi.getTenQuanHuyen()
+        );
+
+        response.setTenPhuongXa(
+                diaChi.getTenPhuongXa()
         );
 
         response.setMacDinh(

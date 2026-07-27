@@ -188,8 +188,15 @@ public class KhachHangService {
         }
         diaChiRepository
                 .findDefault(khachHang.getIdKhachHang())
-                .ifPresent(item -> response.setDiaChiMacDinh(item.getDiaChi()));
-
+                .ifPresent(item -> response.setDiaChiMacDinh(
+                        item.getDiaChi()
+                                + ", "
+                                + item.getTenPhuongXa()
+                                + ", "
+                                + item.getTenQuanHuyen()
+                                + ", "
+                                + item.getTenTinhThanh()
+                ));
         return response;
     }
 
@@ -203,6 +210,7 @@ public class KhachHangService {
     private void sendWelcomeEmail(String email, String username, String password) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(email);
             message.setTo(email);
             message.setSubject("[KC Drink] Thông tin tài khoản khách hàng");
             message.setText("Xin chào,\n\n" +
