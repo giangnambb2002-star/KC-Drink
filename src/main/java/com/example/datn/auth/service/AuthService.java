@@ -31,9 +31,11 @@ public class AuthService {
     public void register(RegisterRequest request) {
 
         if (repository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username đã tồn tại");
+            throw new RuntimeException("Username hoặc sdt đã tồn tại");
         }
-
+        if (repository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email đã tồn tại");
+        }
         // 1. TẠO VÀ LƯU TÀI KHOẢN
         TaiKhoan taiKhoan = new TaiKhoan();
         taiKhoan.setUsername(request.getUsername());

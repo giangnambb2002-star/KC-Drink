@@ -9,24 +9,45 @@ import lombok.Data;
 @Data
 public class NhanVienUpdateRequest {
 
-    @NotBlank
-    @Size(min = 3, max = 50)
+    @NotBlank(message = "Tên nhân viên không được để trống")
+    @Size(
+            min = 3,
+            max = 50,
+            message = "Tên nhân viên phải từ 3 đến 50 ký tự"
+    )
     private String tenNhanVien;
 
+    @NotBlank(message = "Số điện thoại không được để trống")
     @Pattern(
-            regexp = "^0[3|5|7|8|9][0-9]{8}$"
+            regexp = "^0[35789][0-9]{8}$",
+            message = "Số điện thoại không hợp lệ"
     )
     private String sdt;
 
-    @Email
-    @NotBlank
+    @NotBlank(message = "Email không được để trống")
+    @Email(message = "Email không hợp lệ")
+    @Size(
+            max = 100,
+            message = "Email tối đa 100 ký tự"
+    )
     private String email;
 
-    @NotBlank
+    @NotBlank(message = "Chức vụ không được để trống")
+    @Pattern(
+            regexp = "^(ADMIN|STAFF)$",
+            message = "Chức vụ chỉ được là ADMIN hoặc STAFF"
+    )
     private String chucVu;
 
-    @NotBlank
-    @Size(min = 5, max = 30)
+    @NotBlank(message = "Tên đăng nhập không được để trống")
+    @Size(
+            min = 5,
+            max = 30,
+            message = "Tên đăng nhập phải từ 5 đến 30 ký tự"
+    )
+    @Pattern(
+            regexp = "^[A-Za-z0-9_]+$",
+            message = "Tên đăng nhập chỉ được chứa chữ, số và dấu gạch dưới"
+    )
     private String username;
-
 }

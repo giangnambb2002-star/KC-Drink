@@ -89,8 +89,11 @@ public class NhanVienService {
         // ==========================================
         // ĐÃ SỬA: Tự động sinh mật khẩu 8 ký tự
         // ==========================================
-        String autoPassword = UUID.randomUUID().toString().substring(0, 8);
-
+        String autoPassword =
+                "Kc@" + UUID.randomUUID()
+                        .toString()
+                        .replace("-", "")
+                        .substring(0, 8);
         TaiKhoan taiKhoan = TaiKhoan.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(autoPassword)) // Mã hóa mật khẩu vừa sinh
