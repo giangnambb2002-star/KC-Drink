@@ -108,6 +108,8 @@ public class NhanVienService {
         nhanVien.setTenNhanVien(request.getTenNhanVien());
         nhanVien.setSdt(request.getSdt());
         nhanVien.setEmail(request.getEmail());
+        nhanVien.setGioiTinh(request.getGioiTinh());
+        nhanVien.setNgaySinh(request.getNgaySinh());
         nhanVien.setChucVu(
                 request.getChucVu().equals("ADMIN")
                         ? "Quản lý"
@@ -164,6 +166,8 @@ public class NhanVienService {
         nhanVien.setTenNhanVien(request.getTenNhanVien());
         nhanVien.setSdt(request.getSdt());
         nhanVien.setEmail(request.getEmail());
+        nhanVien.setGioiTinh(request.getGioiTinh());
+        nhanVien.setNgaySinh(request.getNgaySinh());
         nhanVien.setChucVu(
                 request.getChucVu().equals("ADMIN")
                         ? "Quản lý"
@@ -207,8 +211,9 @@ public class NhanVienService {
         response.setSdt(nhanVien.getSdt());
         response.setEmail(nhanVien.getEmail());
         response.setChucVu(nhanVien.getChucVu());
+        response.setGioiTinh(nhanVien.getGioiTinh());
+        response.setNgaySinh(nhanVien.getNgaySinh());
         response.setTrangThai(nhanVien.getTrangThai());
-
         if (nhanVien.getTaiKhoan() != null) {
             response.setIdTaiKhoan(nhanVien.getTaiKhoan().getIdTaiKhoan());
             response.setUsername(nhanVien.getTaiKhoan().getUsername());

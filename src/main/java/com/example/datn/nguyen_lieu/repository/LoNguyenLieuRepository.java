@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public interface LoNguyenLieuRepository extends JpaRepository<LoNguyenLieu, Integer> {
 
@@ -31,4 +32,6 @@ public interface LoNguyenLieuRepository extends JpaRepository<LoNguyenLieu, Inte
             "AND (l.trangThai IS NULL OR l.trangThai = 1) " +
             "AND (l.hanSuDung IS NULL OR l.hanSuDung >= CURRENT_DATE)")
     BigDecimal getTongTonKhoConHan(@Param("idNguyenLieu") Integer idNguyenLieu);
+
+    Optional<LoNguyenLieu> findByMaLo(String maLo);
 }

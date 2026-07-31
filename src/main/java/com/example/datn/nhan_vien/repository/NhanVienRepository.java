@@ -59,4 +59,5 @@ AND
             @Param("trangThai") Integer trangThai,
             Pageable pageable
     );
+    boolean existsByEmailAndIdNhanVienNot(String email, Integer idNhanVien);
 }

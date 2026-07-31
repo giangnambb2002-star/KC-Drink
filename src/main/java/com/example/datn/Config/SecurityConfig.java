@@ -47,7 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
 
                         // Những API bắt buộc phải có Token
-                        .requestMatchers("/api/auth/me", "/api/auth/change-password", "/api/auth/logout").authenticated()
+                        .requestMatchers("/api/auth/me", "/api/auth/change-password", "/api/auth/logout","/api/auth/update-profile").authenticated()
 
                         // Những API Auth mở tự do (login, register, forgot-password)
                         .requestMatchers("/api/auth/**").permitAll()

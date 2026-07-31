@@ -13,6 +13,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -39,6 +41,12 @@ public class NhanVien {
 
     @Column(name = "trang_thai")
     private Integer trangThai;
+
+    @Column(name = "gioi_tinh")
+    private Boolean gioiTinh;
+
+    @Column(name = "ngay_sinh")
+    private LocalDate ngaySinh;
 
     @OneToOne
     @JoinColumn(name = "id_tai_khoan")

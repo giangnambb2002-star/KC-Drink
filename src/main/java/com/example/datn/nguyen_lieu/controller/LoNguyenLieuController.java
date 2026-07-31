@@ -1,6 +1,7 @@
 package com.example.datn.nguyen_lieu.controller;
 
 import com.example.datn.common.ApiResponse;
+import com.example.datn.common.ExcelHelper;
 import com.example.datn.common.PageResponse;
 import com.example.datn.nguyen_lieu.dto.LoNguyenLieuRequest;
 import com.example.datn.nguyen_lieu.dto.LoNguyenLieuResponse;
@@ -8,6 +9,7 @@ import com.example.datn.nguyen_lieu.service.LoNguyenLieuService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/lo-nguyen-lieu")
@@ -54,6 +56,26 @@ public class LoNguyenLieuController {
         return new ApiResponse<>(
                 200, "Mở khóa lô nguyên liệu thành công",
                 service.unlock(id)
+        );
+    }
+
+    @PostMapping("/import")
+    public ApiResponse<String> importExcel(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "idNhanVien", required = false) Integer idNhanVien
+    ) {
+        if (!ExcelHelper.hasExcelFormat(file)) {
+            throw new RuntimeException(
+                    "Vui lòng chọn file Excel đúng định dạng (.xlsx)!"
+            );
+        }
+
+        service.importExcelLoNguyenLieu(file, idNhanVien);
+
+        return new ApiResponse<>(
+                200,
+                "Import danh sách lô nguyên liệu từ file Excel thành công!",
+                null
         );
     }
 }

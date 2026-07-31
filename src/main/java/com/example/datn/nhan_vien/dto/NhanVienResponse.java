@@ -1,6 +1,7 @@
 package com.example.datn.nhan_vien.dto;
 
 import lombok.Data;
+import java.time.LocalDate;
 
 @Data
 public class NhanVienResponse {
@@ -20,4 +21,8 @@ public class NhanVienResponse {
     private Integer idTaiKhoan;
 
     private String username;
+
+    private Boolean gioiTinh;
+
+    private LocalDate ngaySinh;
 }

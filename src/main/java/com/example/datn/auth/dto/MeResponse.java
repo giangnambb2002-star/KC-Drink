@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,9 +22,12 @@ public class MeResponse {
     private String tenNguoiDung;
 
     private String chucVu;
-
+    private String sdt;
     private Integer diemTichLuy;
-
+    private Long soNgayDongHanh;
     private Integer idNhanVien;
+    private Boolean gioiTinh;
+    private LocalDate ngaySinh;
     private String tenNhanVien;
+
 }

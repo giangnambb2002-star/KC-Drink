@@ -6,6 +6,7 @@ import com.example.datn.auth.service.AuthService;
 import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.example.datn.common.ApiResponse;
 import com.example.datn.auth.dto.ForgotPasswordRequest;
+import com.example.datn.auth.dto.ProfileUpdateRequest;
 import com.example.datn.auth.dto.ChangePasswordRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -98,6 +99,26 @@ public class AuthController {
                 new ApiResponse<>(
                         200,
                         "Đăng xuất thành công",
+                        null
+                )
+        );
+    }
+    @PutMapping("/update-profile")
+    public ResponseEntity<?> updateProfile(
+            Authentication authentication,
+            @Valid @RequestBody ProfileUpdateRequest request
+    ) {
+        if (authentication == null) {
+            throw new RuntimeException("Chưa đăng nhập");
+        }
+
+        TaiKhoan taiKhoan = (TaiKhoan) authentication.getPrincipal();
+        authService.updateProfile(taiKhoan, request);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        200,
+                        "Cập nhật thông tin cá nhân thành công",
                         null
                 )
         );

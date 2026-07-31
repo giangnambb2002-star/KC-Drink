@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDate;
 import lombok.Data;
 
 @Data
@@ -50,4 +51,7 @@ public class NhanVienUpdateRequest {
             message = "Tên đăng nhập chỉ được chứa chữ, số và dấu gạch dưới"
     )
     private String username;
+    private Boolean gioiTinh;
+
+    private LocalDate ngaySinh;
 }

@@ -9,11 +9,15 @@ import com.example.datn.khach_hang.repository.KhachHangRepository;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import java.util.UUID;
+import com.example.datn.auth.dto.ProfileUpdateRequest;
+import com.example.datn.nhan_vien.entity.NhanVien;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.example.datn.tai_khoan.repository.TaiKhoanRepository;
 import com.example.datn.nhan_vien.repository.NhanVienRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import java.time.LocalDate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -100,6 +104,8 @@ public class AuthService {
         String chucVu = null;
         Integer diemTichLuy = null;
         Integer idNhanVien = null; // BƯỚC 1: Khai báo thêm biến để hứng ID nhân viên
+        Boolean gioiTinh = null;
+        LocalDate ngaySinh = null;
 
         if ("STAFF".equals(taiKhoan.getRole()) || "ADMIN".equals(taiKhoan.getRole())) {
             var nhanVien = nhanVienRepository.findByTaiKhoan(taiKhoan);
@@ -107,6 +113,8 @@ public class AuthService {
                 tenNguoiDung = nhanVien.get().getTenNhanVien();
                 chucVu = nhanVien.get().getChucVu();
                 idNhanVien = nhanVien.get().getIdNhanVien(); // BƯỚC 2: Lấy ID từ database ra
+                gioiTinh = nhanVien.get().getGioiTinh();
+                ngaySinh = nhanVien.get().getNgaySinh();
             }
         }
         if ("USER".equals(taiKhoan.getRole())) {
@@ -120,6 +128,7 @@ public class AuthService {
         // BƯỚC 3: Dùng Setter thay cho Constructor để tránh lỗi thiếu/sai thứ tự tham số
         MeResponse response = new MeResponse();
         response.setIdTaiKhoan(taiKhoan.getIdTaiKhoan());
+
         response.setUsername(taiKhoan.getUsername());
         response.setEmail(taiKhoan.getEmail());
         response.setRole(taiKhoan.getRole());
@@ -127,9 +136,22 @@ public class AuthService {
         response.setChucVu(chucVu);
         response.setDiemTichLuy(diemTichLuy);
         response.setIdNhanVien(idNhanVien); // Nhét thẻ nhân viên vào đây để gửi về Vue!
+        response.setGioiTinh(gioiTinh);
+        response.setNgaySinh(ngaySinh);
+
+        if (("ADMIN".equals(taiKhoan.getRole()) || "STAFF".equals(taiKhoan.getRole()))
+                && taiKhoan.getNgayTao() != null) {
+
+            long soNgayDongHanh = LocalDate.now().toEpochDay()
+                    - taiKhoan.getNgayTao().toLocalDate().toEpochDay()
+                    + 1;
+
+            response.setSoNgayDongHanh(soNgayDongHanh);
+        }
 
         return response;
     }
+
     public void changePassword(
             TaiKhoan taiKhoan,
             ChangePasswordRequest request
@@ -165,5 +187,40 @@ public class AuthService {
                 "Vui lòng đăng nhập và đổi lại mật khẩu ngay lập tức để bảo mật tài khoản.\n" +
                 "Trân trọng!");
         mailSender.send(message);
+    }
+    @Transactional
+    public void updateProfile(TaiKhoan taiKhoan, ProfileUpdateRequest request) {
+        if (!"ADMIN".equals(taiKhoan.getRole()) && !"STAFF".equals(taiKhoan.getRole())) {
+            throw new RuntimeException("Chức năng này chỉ áp dụng cho nhân viên");
+        }
+
+        NhanVien nhanVien = nhanVienRepository.findByTaiKhoan(taiKhoan)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ nhân viên"));
+
+        String email = request.getEmail().trim();
+
+        if (repository.existsByEmailAndIdTaiKhoanNot(
+                email,
+                taiKhoan.getIdTaiKhoan()
+        )) {
+            throw new RuntimeException("Email đã được sử dụng");
+        }
+
+        if (nhanVienRepository.existsByEmailAndIdNhanVienNot(
+                email,
+                nhanVien.getIdNhanVien()
+        )) {
+            throw new RuntimeException("Email đã được sử dụng bởi nhân viên khác");
+        }
+
+        nhanVien.setTenNhanVien(request.getTenKhachHang().trim());
+        nhanVien.setEmail(email);
+        nhanVien.setGioiTinh(request.getGioiTinh());
+        nhanVien.setNgaySinh(request.getNgaySinh());
+
+        taiKhoan.setEmail(email);
+
+        nhanVienRepository.save(nhanVien);
+        repository.save(taiKhoan);
     }
 }

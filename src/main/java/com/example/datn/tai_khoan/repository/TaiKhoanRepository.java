@@ -13,6 +13,6 @@ public interface TaiKhoanRepository
     Optional<TaiKhoan> findByEmail(String email);
 //    Optional<NhanVien> findByTaiKhoan(TaiKhoan taiKhoan);
     boolean existsByUsername(String username);
-
+    boolean existsByEmailAndIdTaiKhoanNot(String email, Integer idTaiKhoan);
     boolean existsByEmail(String email);
 }
