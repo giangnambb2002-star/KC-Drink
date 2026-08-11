@@ -51,7 +51,9 @@ public class SecurityConfig {
 
                         // Những API Auth mở tự do (login, register, forgot-password)
                         .requestMatchers("/api/auth/**").permitAll()
-
+                        .requestMatchers(
+                                "/api/payos/create-payment"
+                        ).authenticated()
                         // Phân quyền Quản trị & Nhân viên
                         .requestMatchers("/api/tai-khoan/**", "/api/nhan-vien/**" ,"/api/voucher/**").hasRole("ADMIN")
                         .requestMatchers("/api/khach-hang/**", "/api/dia-chi/**").hasAnyRole("ADMIN" , "STAFF")

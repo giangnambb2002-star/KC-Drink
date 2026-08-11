@@ -11,8 +11,9 @@ public interface TaiKhoanRepository
     Optional<TaiKhoan> findByUsername(String username);
 
     Optional<TaiKhoan> findByEmail(String email);
-//    Optional<NhanVien> findByTaiKhoan(TaiKhoan taiKhoan);
+    //    Optional<NhanVien> findByTaiKhoan(TaiKhoan taiKhoan);
     boolean existsByUsername(String username);
+    boolean existsByUsernameAndIdTaiKhoanNot(String username, Integer idTaiKhoan);
     boolean existsByEmailAndIdTaiKhoanNot(String email, Integer idTaiKhoan);
     boolean existsByEmail(String email);
 }

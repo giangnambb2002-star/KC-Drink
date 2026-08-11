@@ -1,5 +1,7 @@
 package com.example.datn.auth.service;
 
+import com.example.datn.auth.dto.ChangePhoneRequest;
+import com.example.datn.auth.dto.CustomerProfileUpdateRequest;
 import com.example.datn.auth.dto.LoginRequest;
 import com.example.datn.auth.dto.MeResponse;
 import com.example.datn.auth.dto.RegisterRequest;
@@ -98,10 +100,10 @@ public class AuthService {
                 taiKhoan.getUsername()
         );
     }
-
     public MeResponse getCurrentUser(TaiKhoan taiKhoan) {
         String tenNguoiDung = null;
         String chucVu = null;
+        String sdt = null;
         Integer diemTichLuy = null;
         Integer idNhanVien = null; // BƯỚC 1: Khai báo thêm biến để hứng ID nhân viên
         Boolean gioiTinh = null;
@@ -115,6 +117,8 @@ public class AuthService {
                 idNhanVien = nhanVien.get().getIdNhanVien(); // BƯỚC 2: Lấy ID từ database ra
                 gioiTinh = nhanVien.get().getGioiTinh();
                 ngaySinh = nhanVien.get().getNgaySinh();
+                sdt = nhanVien.get().getSdt();
+
             }
         }
         if ("USER".equals(taiKhoan.getRole())) {
@@ -122,33 +126,31 @@ public class AuthService {
             if (khachHang.isPresent()) {
                 tenNguoiDung = khachHang.get().getTenKhachHang();
                 diemTichLuy = khachHang.get().getDiemTichLuy();
+                sdt = khachHang.get().getSdt();
+                gioiTinh = khachHang.get().getGioiTinh();
+                ngaySinh = khachHang.get().getNgaySinh();
+                
             }
         }
-
         // BƯỚC 3: Dùng Setter thay cho Constructor để tránh lỗi thiếu/sai thứ tự tham số
         MeResponse response = new MeResponse();
         response.setIdTaiKhoan(taiKhoan.getIdTaiKhoan());
-
         response.setUsername(taiKhoan.getUsername());
         response.setEmail(taiKhoan.getEmail());
         response.setRole(taiKhoan.getRole());
         response.setTenNguoiDung(tenNguoiDung);
         response.setChucVu(chucVu);
+        response.setSdt(sdt);
         response.setDiemTichLuy(diemTichLuy);
         response.setIdNhanVien(idNhanVien); // Nhét thẻ nhân viên vào đây để gửi về Vue!
         response.setGioiTinh(gioiTinh);
         response.setNgaySinh(ngaySinh);
-
         if (("ADMIN".equals(taiKhoan.getRole()) || "STAFF".equals(taiKhoan.getRole()))
                 && taiKhoan.getNgayTao() != null) {
-
             long soNgayDongHanh = LocalDate.now().toEpochDay()
-                    - taiKhoan.getNgayTao().toLocalDate().toEpochDay()
-                    + 1;
-
+                    - taiKhoan.getNgayTao().toLocalDate().toEpochDay() + 1;
             response.setSoNgayDongHanh(soNgayDongHanh);
         }
-
         return response;
     }
 
@@ -217,10 +219,70 @@ public class AuthService {
         nhanVien.setEmail(email);
         nhanVien.setGioiTinh(request.getGioiTinh());
         nhanVien.setNgaySinh(request.getNgaySinh());
-
+        nhanVien.setSdt(request.getSdt().trim());
         taiKhoan.setEmail(email);
 
         nhanVienRepository.save(nhanVien);
+        repository.save(taiKhoan);
+    }
+    @Transactional
+    public void updateCustomerProfile(
+            TaiKhoan taiKhoan,
+            CustomerProfileUpdateRequest request
+    ) {
+        if (!"USER".equals(taiKhoan.getRole())) {
+            throw new RuntimeException("Chức năng này chỉ áp dụng cho khách hàng");
+        }
+
+        KhachHang khachHang = khachHangRepository.findByTaiKhoan(taiKhoan)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hồ sơ khách hàng"));
+
+        String email = request.getEmail().trim();
+
+        if (repository.existsByEmailAndIdTaiKhoanNot(
+                email,
+                taiKhoan.getIdTaiKhoan()
+        )) {
+            throw new RuntimeException("Email đã được sử dụng");
+        }
+
+        khachHang.setTenKhachHang(request.getTenKhachHang().trim());
+        khachHang.setEmail(email);
+        khachHang.setSdt(request.getSdt().trim());
+        khachHang.setGioiTinh(request.getGioiTinh());
+        khachHang.setNgaySinh(request.getNgaySinh());
+
+        taiKhoan.setEmail(email);
+
+        khachHangRepository.save(khachHang);
+        repository.save(taiKhoan);
+    }
+    @Transactional
+    public void changePhone(
+            TaiKhoan taiKhoan,
+            ChangePhoneRequest request
+    ) {
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                taiKhoan.getPassword()
+        )) {
+            throw new RuntimeException("Mật khẩu hiện tại không chính xác");
+        }
+
+        String newPhone = request.getNewPhone().trim();
+
+        if (newPhone.equals(taiKhoan.getUsername())) {
+            throw new RuntimeException("Số điện thoại mới phải khác số điện thoại hiện tại");
+        }
+
+        if (repository.existsByUsernameAndIdTaiKhoanNot(
+                newPhone,
+                taiKhoan.getIdTaiKhoan()
+        )) {
+            throw new RuntimeException("Số điện thoại đã được sử dụng");
+        }
+
+        taiKhoan.setUsername(newPhone);
         repository.save(taiKhoan);
     }
 }
