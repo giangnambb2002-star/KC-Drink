@@ -33,5 +33,15 @@ public interface LoNguyenLieuRepository extends JpaRepository<LoNguyenLieu, Inte
             "AND (l.hanSuDung IS NULL OR l.hanSuDung >= CURRENT_DATE)")
     BigDecimal getTongTonKhoConHan(@Param("idNguyenLieu") Integer idNguyenLieu);
 
-    Optional<LoNguyenLieu> findByMaLo(String maLo);
+//    Optional<LoNguyenLieu> findByMaLo(String maLo);
+Optional<LoNguyenLieu> findByMaLoIgnoreCase(String maLo);
+
+    @Query("SELECT COUNT(l) FROM LoNguyenLieu l WHERE l.trangThai = 1 " +
+            "AND l.soLuongTon > 0 " +
+            "AND l.hanSuDung BETWEEN :tuNgay AND :denNgay")
+    long countSapHetHan(
+            @Param("tuNgay") java.time.LocalDate tuNgay,
+            @Param("denNgay") java.time.LocalDate denNgay
+    );
 }
+

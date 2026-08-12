@@ -24,4 +24,9 @@ public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
             @Param("trangThai") Integer trangThai,
             Pageable pageable
     );
+    @Query("SELECT COUNT(v) FROM Voucher v WHERE v.trangThai = 1 " +
+            "AND (v.soLuong IS NULL OR v.soLuong > 0) " +
+            "AND v.ngayBatDau <= CURRENT_TIMESTAMP " +
+            "AND v.ngayKetThuc >= CURRENT_TIMESTAMP")
+    long countVoucherDangHoatDong();
 }

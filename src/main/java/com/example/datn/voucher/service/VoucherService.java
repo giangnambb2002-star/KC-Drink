@@ -2,6 +2,7 @@ package com.example.datn.voucher.service;
 
 import com.example.datn.common.PageResponse;
 import com.example.datn.khach_hang.repository.KhachHangRepository;
+import com.example.datn.nhat_ky_he_thong.service.NhatKyHeThongService;
 import com.example.datn.voucher.dto.VoucherRequest;
 import com.example.datn.voucher.dto.VoucherResponse;
 import com.example.datn.voucher.dto.VoucherValidationResponse;
@@ -26,6 +27,7 @@ public class VoucherService {
     private final VoucherRepository repository;
     private final KhachHangRepository khachHangRepository;
     private final VoucherMailService mailService;
+    private final NhatKyHeThongService nhatKyHeThongService;
 
     // Danh sách phân trang cho Admin
     public PageResponse<VoucherResponse> getAll(
@@ -161,6 +163,12 @@ public class VoucherService {
         }
 
         Voucher savedVoucher = repository.save(voucher);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "THÊM",
+                "VOUCHER",
+                savedVoucher.getIdVoucher(),
+                "Thêm voucher " + savedVoucher.getMaVoucher()
+        );
 
         // NẾU CÓ NHẬP ID KHÁCH HÀNG -> TỰ ĐỘNG GỬI MAIL
         if (savedVoucher.getIdKhachHang() != null) {
@@ -202,22 +210,48 @@ public class VoucherService {
         if (request.getKieuGiamGia() != null) {
             voucher.setLoaiVoucher(request.getKieuGiamGia() == 0 ? "PERCENT" : "FIXED");
         }
+        Voucher savedVoucher = repository.save(voucher);
 
-        return toResponse(repository.save(voucher));
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "CẬP NHẬT",
+                "VOUCHER",
+                savedVoucher.getIdVoucher(),
+                "Cập nhật voucher " + savedVoucher.getMaVoucher()
+        );
+
+        return toResponse(savedVoucher);
     }
 
     public VoucherResponse lock(Integer id) {
         Voucher voucher = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mã giảm giá!"));
         voucher.setTrangThai(0); // Chuyển sang Đã khóa
-        return toResponse(repository.save(voucher));
+        Voucher savedVoucher = repository.save(voucher);
+
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "KHÓA",
+                "VOUCHER",
+                savedVoucher.getIdVoucher(),
+                "Khóa voucher " + savedVoucher.getMaVoucher()
+        );
+
+        return toResponse(savedVoucher);
     }
 
     public VoucherResponse unlock(Integer id) {
         Voucher voucher = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mã giảm giá!"));
         voucher.setTrangThai(1); // Chuyển sang Đang mở
-        return toResponse(repository.save(voucher));
+        Voucher savedVoucher = repository.save(voucher);
+
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "MỞ KHÓA",
+                "VOUCHER",
+                savedVoucher.getIdVoucher(),
+                "Mở khóa voucher " + savedVoucher.getMaVoucher()
+        );
+
+        return toResponse(savedVoucher);
     }
     // ====================================================================
     // CRON JOB: TỰ ĐỘNG QUÉT VÀ KHÓA VOUCHER ĐÃ HẾT HẠN
@@ -228,24 +262,29 @@ public class VoucherService {
     public void tuDongKhoaVoucherHetHan() {
         System.out.println("============== [QUÉT VOUCHER HẾT HẠN] ==============");
         try {
-            // Lấy toàn bộ danh sách Voucher từ Database
-            // (Nếu hàm của bạn tên khác, ví dụ getAll(), thì sửa lại nhé)
             java.util.List<Voucher> danhSachVoucher = repository.findAll();
 
             java.time.LocalDateTime bayGio = java.time.LocalDateTime.now();
             int soLuongDaKhoa = 0;
 
-            // Duyệt qua từng mã để kiểm tra
             for (Voucher v : danhSachVoucher) {
-                // Điều kiện: Trạng thái đang mở (1) + Có hạn sử dụng + Hạn sử dụng nhỏ hơn thời gian hiện tại
                 if (v.getTrangThai() == 1
                         && v.getNgayKetThuc() != null
                         && v.getNgayKetThuc().isBefore(bayGio)) {
-
-                    v.setTrangThai(0); // Ép về 0 (Đã khóa)
-                    repository.save(v); // Lưu đè lại vào DB
+                    v.setTrangThai(0);
+                    repository.save(v);
                     soLuongDaKhoa++;
                 }
+            }
+            if (soLuongDaKhoa > 0) {
+                nhatKyHeThongService.ghiLogHeThong(
+                        "TỰ ĐỘNG KHÓA",
+                        "VOUCHER",
+                        null,
+                        "Hệ thống đã tự động khóa "
+                                + soLuongDaKhoa
+                                + " voucher hết hạn"
+                );
             }
             System.out.println("✅ TỰ ĐỘNG KHÓA THÀNH CÔNG: " + soLuongDaKhoa + " MÃ QUÁ HẠN.");
         } catch (Exception e) {
@@ -253,5 +292,4 @@ public class VoucherService {
         }
         System.out.println("====================================================");
     }
-
 }

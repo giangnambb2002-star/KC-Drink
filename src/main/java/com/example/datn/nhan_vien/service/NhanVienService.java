@@ -5,6 +5,7 @@ import com.example.datn.nhan_vien.dto.NhanVienUpdateRequest;
 import com.example.datn.nhan_vien.entity.NhanVien;
 import com.example.datn.common.PageResponse;
 import com.example.datn.nhan_vien.dto.NhanVienResponse;
+import com.example.datn.nhat_ky_he_thong.service.NhatKyHeThongService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +31,7 @@ public class NhanVienService {
     private final TaiKhoanRepository taiKhoanRepository;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
-
+    private final NhatKyHeThongService nhatKyHeThongService;
 
     public PageResponse<NhanVienResponse> getAll(
             String keyword,
@@ -119,6 +120,12 @@ public class NhanVienService {
         nhanVien.setTaiKhoan(taiKhoan);
 
         NhanVien savedNhanVien = nhanVienRepository.save(nhanVien);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "THÊM",
+                "NHÂN VIÊN",
+                savedNhanVien.getIdNhanVien(),
+                "Thêm nhân viên " + savedNhanVien.getTenNhanVien()
+        );
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(request.getEmail());
@@ -179,7 +186,14 @@ public class NhanVienService {
         taiKhoan.setRole(request.getChucVu());
         taiKhoanRepository.save(taiKhoan);
 
-        return toResponse(nhanVienRepository.save(nhanVien));
+        NhanVien savedNhanVien = nhanVienRepository.save(nhanVien);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "CẬP NHẬT",
+                "NHÂN VIÊN",
+                savedNhanVien.getIdNhanVien(),
+                "Cập nhật nhân viên " + savedNhanVien.getTenNhanVien()
+        );
+        return toResponse(savedNhanVien);
     }
 
     public NhanVienResponse lock(Integer id) {
@@ -190,7 +204,14 @@ public class NhanVienService {
         taiKhoan.setTrangThai(0);
         taiKhoanRepository.save(taiKhoan);
 
-        return toResponse(nhanVienRepository.save(nhanVien));
+        NhanVien savedNhanVien = nhanVienRepository.save(nhanVien);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "KHÓA",
+                "NHÂN VIÊN",
+                savedNhanVien.getIdNhanVien(),
+                "Khóa nhân viên " + savedNhanVien.getTenNhanVien()
+        );
+        return toResponse(savedNhanVien);
     }
 
     public NhanVienResponse unlock(Integer id) {
@@ -201,7 +222,14 @@ public class NhanVienService {
         taiKhoan.setTrangThai(1);
         taiKhoanRepository.save(taiKhoan);
 
-        return toResponse(nhanVienRepository.save(nhanVien));
+        NhanVien savedNhanVien = nhanVienRepository.save(nhanVien);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "MỞ KHÓA",
+                "NHÂN VIÊN",
+                savedNhanVien.getIdNhanVien(),
+                "Mở khóa nhân viên " + savedNhanVien.getTenNhanVien()
+        );
+        return toResponse(savedNhanVien);
     }
 
     private NhanVienResponse toResponse(NhanVien nhanVien) {

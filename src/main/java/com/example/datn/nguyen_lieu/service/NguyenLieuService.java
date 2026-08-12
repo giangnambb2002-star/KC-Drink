@@ -6,6 +6,7 @@ import com.example.datn.nguyen_lieu.dto.NguyenLieuResponse;
 import com.example.datn.nguyen_lieu.entity.NguyenLieu;
 import com.example.datn.nguyen_lieu.repository.LoNguyenLieuRepository;
 import com.example.datn.nguyen_lieu.repository.NguyenLieuRepository;
+import com.example.datn.nhat_ky_he_thong.service.NhatKyHeThongService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +23,7 @@ public class NguyenLieuService {
     private final NguyenLieuRepository repository;
 
     private final LoNguyenLieuRepository loNguyenLieuRepository;
+    private final NhatKyHeThongService nhatKyHeThongService;
 
     // Phân trang + Tìm kiếm + Sắp xếp y hệt Leader
     public PageResponse<NguyenLieuResponse> getAll(
@@ -64,7 +66,14 @@ public class NguyenLieuService {
         nguyenLieu.setDonViTinh(request.getDonViTinh());
         nguyenLieu.setTrangThai(1);
         nguyenLieu.setNguongTonKho(request.getNguongTonKho());
-        return toResponse(repository.save(nguyenLieu));
+        NguyenLieu savedNguyenLieu = repository.save(nguyenLieu);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "THÊM",
+                "NGUYÊN LIỆU",
+                savedNguyenLieu.getIdNguyenLieu(),
+                "Thêm nguyên liệu " + savedNguyenLieu.getTenNguyenLieu()
+        );
+        return toResponse(savedNguyenLieu);
     }
 
     public NguyenLieuResponse update(Integer id, NguyenLieuRequest request) {
@@ -79,7 +88,14 @@ public class NguyenLieuService {
         if (request.getTrangThai() != null) {
             nguyenLieu.setTrangThai(request.getTrangThai());
         }
-        return toResponse(repository.save(nguyenLieu));
+        NguyenLieu savedNguyenLieu = repository.save(nguyenLieu);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "CẬP NHẬT",
+                "NGUYÊN LIỆU",
+                savedNguyenLieu.getIdNguyenLieu(),
+                "Cập nhật nguyên liệu " + savedNguyenLieu.getTenNguyenLieu()
+        );
+        return toResponse(savedNguyenLieu);
     }
 
     // Khóa nguyên liệu (Ngừng sử dụng)
@@ -87,7 +103,14 @@ public class NguyenLieuService {
         NguyenLieu nguyenLieu = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu"));
         nguyenLieu.setTrangThai(0);
-        return toResponse(repository.save(nguyenLieu));
+        NguyenLieu savedNguyenLieu = repository.save(nguyenLieu);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "KHÓA",
+                "NGUYÊN LIỆU",
+                savedNguyenLieu.getIdNguyenLieu(),
+                "Khóa nguyên liệu " + savedNguyenLieu.getTenNguyenLieu()
+        );
+        return toResponse(savedNguyenLieu);
     }
 
     // Mở khóa nguyên liệu (Sử dụng lại)
@@ -95,7 +118,14 @@ public class NguyenLieuService {
         NguyenLieu nguyenLieu = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu"));
         nguyenLieu.setTrangThai(1);
-        return toResponse(repository.save(nguyenLieu));
+        NguyenLieu savedNguyenLieu = repository.save(nguyenLieu);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "MỞ KHÓA",
+                "NGUYÊN LIỆU",
+                savedNguyenLieu.getIdNguyenLieu(),
+                "Mở khóa nguyên liệu " + savedNguyenLieu.getTenNguyenLieu()
+        );
+        return toResponse(savedNguyenLieu);
     }
 
     // Hàm chuyển Entity thành Response DTO

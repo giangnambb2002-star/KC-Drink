@@ -2,6 +2,7 @@ package com.example.datn.voucher.service;
 
 import com.example.datn.khach_hang.entity.KhachHang;
 import com.example.datn.khach_hang.repository.KhachHangRepository;
+import com.example.datn.nhat_ky_he_thong.service.NhatKyHeThongService;
 import com.example.datn.voucher.entity.Voucher;
 import com.example.datn.voucher.repository.VoucherRepository;
 import jakarta.mail.internet.MimeMessage;
@@ -30,46 +31,66 @@ public class VoucherMailService {
     @Autowired
     private VoucherRepository voucherRepository; // Nhớ tạo interface JpaRepository cho Voucher nhé
 
+    @Autowired
+    private NhatKyHeThongService nhatKyHeThongService;
+
     @Transactional
     public void tangVoucherSinhNhat() {
         int currentMonth = LocalDate.now().getMonthValue();
         int currentDay = LocalDate.now().getDayOfMonth();
         int currentYear = LocalDate.now().getYear();
+        int soLuongDaTang = 0;
 
-        // 1. Tìm tất cả khách hàng sinh nhật hôm nay (Bạn cần viết 1 query trong KhachHangRepository để gọi hàm này)
-        List<KhachHang> danhSachSinhNhat = khachHangRepository.findKhachHangSinhNhat(currentDay, currentMonth);
+        List<KhachHang> danhSachSinhNhat =
+                khachHangRepository.findKhachHangSinhNhat(currentDay, currentMonth);
 
         for (KhachHang kh : danhSachSinhNhat) {
             if (kh.getNamNhanVoucherSn() == null || kh.getNamNhanVoucherSn() < currentYear) {
 
-                // 2. Tạo Voucher (Giảm 30%, tối đa 100k, không cần điều kiện tối thiểu)
-                String maCode = "SN" + currentYear + "-" + UUID.randomUUID().toString().substring(0, 5).toUpperCase();
+                String maCode = "SN" + currentYear + "-"
+                        + UUID.randomUUID()
+                        .toString()
+                        .substring(0, 5)
+                        .toUpperCase();
 
                 Voucher v = new Voucher();
                 v.setIdKhachHang(kh.getIdKhachHang());
                 v.setMaVoucher(maCode);
                 v.setTenVoucher("Quà tặng sinh nhật " + currentYear);
                 v.setLoaiVoucher("PERCENT");
-                v.setGiaTriGiam(new BigDecimal("30")); // 30%
-                v.setGiamToiDa(new BigDecimal("100000")); // Tối đa 100k
-                v.setDieuKien(BigDecimal.ZERO); // Không yêu cầu đơn tối thiểu
+                v.setGiaTriGiam(new BigDecimal("30"));
+                v.setGiamToiDa(new BigDecimal("100000"));
+                v.setDieuKien(BigDecimal.ZERO);
                 v.setNgayBatDau(LocalDateTime.now());
-                v.setNgayKetThuc(LocalDateTime.now().plusDays(7)); // Hạn 7 ngày
+                v.setNgayKetThuc(LocalDateTime.now().plusDays(7));
                 v.setSoLuong(1);
-                v.setTrangThai(1); // 1 là Active
+                v.setTrangThai(1);
 
                 voucherRepository.save(v);
+                soLuongDaTang++;
 
-                // 3. Cập nhật khách hàng
                 kh.setNamNhanVoucherSn(currentYear);
                 khachHangRepository.save(kh);
 
-                // 4. Gửi Mail
-                guiMailHtml(kh.getEmail(), kh.getTenKhachHang(), maCode);
+                guiMailHtml(
+                        kh.getEmail(),
+                        kh.getTenKhachHang(),
+                        maCode
+                );
             }
         }
-    }
 
+        if (soLuongDaTang > 0) {
+            nhatKyHeThongService.ghiLogHeThong(
+                    "TẶNG SINH NHẬT",
+                    "VOUCHER",
+                    null,
+                    "Hệ thống đã tự động tạo "
+                            + soLuongDaTang
+                            + " voucher sinh nhật cho khách hàng"
+            );
+        }
+    }
     private void guiMailHtml(String email, String tenKh, String maCode) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
