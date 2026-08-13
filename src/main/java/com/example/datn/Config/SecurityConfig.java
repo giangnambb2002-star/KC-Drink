@@ -72,6 +72,7 @@ public class SecurityConfig {
                                 "/api/lo-topping/import"
                         ).hasRole("ADMIN")
                         .requestMatchers("/api/nhat-ky-he-thong/**").hasRole("ADMIN")
+                        .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
                         // Khóa chặt các API còn lại
                         .anyRequest().authenticated()
 
