@@ -122,4 +122,15 @@ public class GhnController {
                 service.getOrderDetail(orderCode)
         );
     }
+
+    @PostMapping("/order/{orderCode}/cancel")
+    public ApiResponse<JsonNode> cancelOrder(
+            @PathVariable String orderCode
+    ) {
+        return new ApiResponse<>(
+                200,
+                "Hủy đơn GHN thành công",
+                service.cancelOrder(orderCode)
+        );
+    }
 }

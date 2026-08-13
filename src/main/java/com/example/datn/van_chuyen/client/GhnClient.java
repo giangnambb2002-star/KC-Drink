@@ -1,5 +1,6 @@
 package com.example.datn.van_chuyen.client;
 
+import com.example.datn.van_chuyen.dto.GhnCancelOrderRequest;
 import com.example.datn.van_chuyen.dto.GhnCreateOrderRequest;
 import com.example.datn.van_chuyen.dto.GhnDistrictRequest;
 import com.example.datn.van_chuyen.dto.GhnFeeRequest;
@@ -249,5 +250,26 @@ public class GhnClient {
                 "Không thể kết nối đến hệ thống GHN: " + exception.getMessage(),
                 exception
         );
+    }
+    public JsonNode cancelOrder(String orderCode) {
+        String url = baseUrl + "/v2/switch-status/cancel";
+        GhnCancelOrderRequest requestBody =
+                new GhnCancelOrderRequest(List.of(orderCode));
+
+        HttpEntity<GhnCancelOrderRequest> requestEntity =
+                new HttpEntity<>(requestBody, createHeaders(true));
+
+        try {
+            return restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    requestEntity,
+                    JsonNode.class
+            ).getBody();
+        } catch (HttpStatusCodeException exception) {
+            throw createGhnException(exception);
+        } catch (RestClientException exception) {
+            throw createConnectionException(exception);
+        }
     }
 }

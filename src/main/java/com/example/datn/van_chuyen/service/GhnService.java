@@ -8,7 +8,9 @@ import com.example.datn.van_chuyen.dto.GhnLeadTimeRequest;
 import com.example.datn.van_chuyen.dto.PhiVanChuyenResponse;
 import com.example.datn.van_chuyen.dto.TaoDonGhnRequest;
 import com.example.datn.van_chuyen.dto.TinhPhiRequest;
+import com.example.datn.van_chuyen.util.GhnStatusUtil;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -146,12 +148,29 @@ public class GhnService {
         return json.get("data");
     }
 
+    public JsonNode cancelOrder(String orderCode) {
+        if (orderCode == null || orderCode.isBlank()) {
+            throw new RuntimeException("Mã vận đơn GHN không được để trống");
+        }
+
+        JsonNode json = ghnClient.cancelOrder(orderCode.trim());
+        return json.get("data");
+    }
+
     public JsonNode getOrderDetail(String orderCode) {
         if (orderCode == null || orderCode.isBlank()) {
             throw new RuntimeException("Mã vận đơn GHN không được để trống");
         }
 
         JsonNode json = ghnClient.getOrderDetail(orderCode.trim());
-        return json.get("data");
+        JsonNode data = json.get("data");
+
+        if (data instanceof ObjectNode) {
+            ObjectNode objectNode = (ObjectNode) data;
+            String status = data.path("status").asText();
+            objectNode.put("statusLabel", GhnStatusUtil.toVietnamese(status));
+        }
+
+        return data;
     }
 }
