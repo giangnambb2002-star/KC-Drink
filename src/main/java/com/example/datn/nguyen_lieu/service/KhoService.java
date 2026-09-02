@@ -1,7 +1,9 @@
 package com.example.datn.nguyen_lieu.service;
 
 import com.example.datn.nguyen_lieu.entity.LoNguyenLieu;
+import com.example.datn.nguyen_lieu.entity.NguyenLieu;
 import com.example.datn.nguyen_lieu.repository.LoNguyenLieuRepository;
+import com.example.datn.nguyen_lieu.repository.NguyenLieuRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,7 @@ import java.util.List;
 public class KhoService {
 
     private final LoNguyenLieuRepository loNguyenLieuRepository;
+    private final NguyenLieuRepository nguyenLieuRepository;
 
     /**
      * THUẬT TOÁN FEFO (First-Expired, First-Out)
@@ -21,11 +24,23 @@ public class KhoService {
     @Transactional
     public void truKhoNguyenLieu(Integer idNguyenLieu, Double soLuongCanTru) {
 
-        // 1. Kéo toàn bộ các lô còn hàng, còn hạn sử dụng của nguyên liệu này lên, xếp theo Date gần nhất
-        List<LoNguyenLieu> cacLoHopLe = loNguyenLieuRepository.findLoToUseFEFO(idNguyenLieu);
+        NguyenLieu nguyenLieu = nguyenLieuRepository.findById(idNguyenLieu)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu"));
+
+        if (nguyenLieu.getTrangThai() == null || nguyenLieu.getTrangThai() != 1) {
+            throw new RuntimeException(
+                    "Nguyên liệu \"" + nguyenLieu.getTenNguyenLieu()
+                            + "\" đang ngừng sử dụng."
+            );
+        }
+
+        // 1. Kéo toàn bộ các lô còn hàng, còn hạn sử dụng...
+        List<LoNguyenLieu> cacLoHopLe =
+                loNguyenLieuRepository.findLoToUseFEFO(idNguyenLieu);
 
         Double soLuongConThieu = soLuongCanTru;
 
+        // phần dưới giữ nguyên
         // 2. Chạy vòng lặp trừ lùi từng lô
         for (LoNguyenLieu lo : cacLoHopLe) {
             if (soLuongConThieu <= 0) break; // Đã trừ đủ số lượng thì dừng luôn
@@ -44,7 +59,11 @@ public class KhoService {
 
         // 3. Chốt hạ: Nếu vét cạn các lô rồi mà vẫn thiếu hàng -> Báo lỗi cho Frontend
         if (soLuongConThieu > 0) {
-            throw new RuntimeException("Kho không đủ nguyên liệu (ID: " + idNguyenLieu + "). Thiếu: " + soLuongConThieu);
+            String ten = nguyenLieu.getTenNguyenLieu();
+            String donVi = nguyenLieu.getDonViTinh();
+            Double tongTon = soLuongCanTru - soLuongConThieu;
+            
+            throw new RuntimeException("Không đủ nguyên liệu \"" + ten + "\". Cần " + soLuongCanTru + " " + donVi + ", tồn khả dụng " + tongTon + " " + donVi + ".");
         }
 
         // 4. Lưu lại toàn bộ sự thay đổi xuống Database
