@@ -1,0 +1,29 @@
+package com.example.datn.san_pham.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "SIZE")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class Size {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_size")
+    private Integer idSize;
+
+    @Column(name = "ten_size")
+    private String tenSize;
+
+    @Column(name = "phu_thu")
+    private BigDecimal phuThu;
+
+    @Column(name = "thu_tu")
+    private Integer thuTu;
+}

@@ -28,13 +28,60 @@ public class CongThucService {
     public CongThucSanPham createCtsp(CongThucSanPhamRequest request) {
         NguyenLieu nl = nguyenLieuRepository.findById(request.getIdNguyenLieu())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu"));
+        if (nl.getTrangThai() == null || nl.getTrangThai() != 1) {
+            throw new RuntimeException("Nguyên liệu đang ngừng sử dụng");
+        }
 
+        if (ctspRepository.existsByIdSanPhamAndIdSizeAndNguyenLieu_IdNguyenLieu(
+                request.getIdSanPham(),
+                request.getIdSize(),
+                request.getIdNguyenLieu()
+        )) {
+            throw new RuntimeException("Nguyên liệu đã tồn tại trong công thức");
+        }
         CongThucSanPham ct = new CongThucSanPham();
         ct.setIdSanPham(request.getIdSanPham());
         ct.setIdSize(request.getIdSize());
         ct.setNguyenLieu(nl);
         ct.setSoLuongCanDung(request.getSoLuongCanDung());
         return ctspRepository.save(ct);
+    }
+
+
+    public CongThucSanPham updateCtsp(
+            Integer id,
+            CongThucSanPhamRequest request) {
+
+        CongThucSanPham ct = ctspRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy công thức"));
+
+        NguyenLieu nl = nguyenLieuRepository.findById(request.getIdNguyenLieu())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu"));
+
+        if (nl.getTrangThai() == null || nl.getTrangThai() != 1) {
+            throw new RuntimeException("Nguyên liệu đang ngừng sử dụng");
+        }
+        if (ctspRepository.existsByIdSanPhamAndIdSizeAndNguyenLieu_IdNguyenLieuAndIdCtspNot(
+                request.getIdSanPham(),
+                request.getIdSize(),
+                request.getIdNguyenLieu(),
+                id
+        )) {
+            throw new RuntimeException("Nguyên liệu đã tồn tại trong công thức");
+        }
+        ct.setIdSanPham(request.getIdSanPham());
+        ct.setIdSize(request.getIdSize());
+        ct.setNguyenLieu(nl);
+        ct.setSoLuongCanDung(request.getSoLuongCanDung());
+
+        return ctspRepository.save(ct);
+    }
+
+    public void deleteCtsp(Integer id) {
+        CongThucSanPham ct = ctspRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy công thức"));
+
+        ctspRepository.delete(ct);
     }
 
     public PageResponse<CongThucSanPham> getBySanPhamAndSize(

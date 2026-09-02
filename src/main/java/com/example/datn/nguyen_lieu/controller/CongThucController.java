@@ -37,7 +37,27 @@ public class CongThucController {
                 service.getBySanPhamAndSize(idSanPham, idSize, page, size, sortBy, direction)
         );
     }
+    @PutMapping("/san-pham/{id}")
+    public ApiResponse<CongThucSanPham> updateCtsp(
+            @PathVariable Integer id,
+            @Valid @RequestBody CongThucSanPhamRequest request) {
+        return new ApiResponse<>(
+                200,
+                "Cập nhật công thức sản phẩm thành công",
+                service.updateCtsp(id, request)
+        );
+    }
 
+    @DeleteMapping("/san-pham/{id}")
+    public ApiResponse<Void> deleteCtsp(@PathVariable Integer id) {
+        service.deleteCtsp(id);
+
+        return new ApiResponse<>(
+                200,
+                "Xóa nguyên liệu khỏi công thức thành công",
+                null
+        );
+    }
     @PostMapping("/topping")
     public ApiResponse<CongThucTopping> createCtt(@Valid @RequestBody CongThucToppingRequest request) {
         return new ApiResponse<>(201, "Cài đặt công thức topping thành công", service.createCtt(request));
