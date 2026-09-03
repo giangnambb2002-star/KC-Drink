@@ -60,4 +60,5 @@ AND
             Pageable pageable
     );
     boolean existsByEmailAndIdNhanVienNot(String email, Integer idNhanVien);
+    long countByTrangThai(Integer trangThai);
 }

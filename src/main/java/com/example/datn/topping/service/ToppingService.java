@@ -1,6 +1,7 @@
 package com.example.datn.topping.service;
 
 import com.example.datn.common.PageResponse;
+import com.example.datn.nhat_ky_he_thong.service.NhatKyHeThongService;
 import com.example.datn.topping.dto.ToppingRequest;
 import com.example.datn.topping.dto.ToppingResponse;
 import com.example.datn.topping.entity.Topping;
@@ -22,6 +23,8 @@ public class ToppingService {
     private final ToppingRepository repository;
 
     private final LoToppingRepository loToppingRepository;
+
+    private final NhatKyHeThongService nhatKyHeThongService;
 
     public PageResponse<ToppingResponse> getAll(
             String keyword,
@@ -70,7 +73,16 @@ public class ToppingService {
         // 👉 Đã sửa thành getTongTonKho / setTongTonKho
         topping.setTongTonKho(request.getTongTonKho() != null ? request.getTongTonKho() : 0);
 
-        return toResponse(repository.save(topping));
+        Topping savedTopping = repository.save(topping);
+
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "THÊM",
+                "TOPPING",
+                savedTopping.getIdTopping(),
+                "Thêm topping " + savedTopping.getTenTopping()
+        );
+
+        return toResponse(savedTopping);
     }
 
     public ToppingResponse update(Integer id, ToppingRequest request) {
@@ -93,22 +105,48 @@ public class ToppingService {
         if (request.getTongTonKho() != null) {
             topping.setTongTonKho(request.getTongTonKho());
         }
+        Topping savedTopping = repository.save(topping);
 
-        return toResponse(repository.save(topping));
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "CẬP NHẬT",
+                "TOPPING",
+                savedTopping.getIdTopping(),
+                "Cập nhật topping " + savedTopping.getTenTopping()
+        );
+
+        return toResponse(savedTopping);
     }
 
     public ToppingResponse lock(Integer id) {
         Topping topping = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy topping"));
         topping.setTrangThai(0);
-        return toResponse(repository.save(topping));
+        Topping savedTopping = repository.save(topping);
+
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "KHÓA",
+                "TOPPING",
+                savedTopping.getIdTopping(),
+                "Khóa topping " + savedTopping.getTenTopping()
+        );
+
+        return toResponse(savedTopping);
     }
 
     public ToppingResponse unlock(Integer id) {
         Topping topping = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy topping"));
         topping.setTrangThai(1);
-        return toResponse(repository.save(topping));
+        Topping savedTopping = repository.save(topping);
+
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "MỞ KHÓA",
+                "TOPPING",
+                savedTopping.getIdTopping(),
+                "Mở khóa topping " + savedTopping.getTenTopping()
+        );
+
+        return toResponse(savedTopping);
     }
 
     private ToppingResponse toResponse(Topping topping) {

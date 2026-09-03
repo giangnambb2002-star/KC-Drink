@@ -35,6 +35,15 @@ public interface LoToppingRepository extends JpaRepository<LoTopping, Integer> {
     BigDecimal getTongTonKhoConHan(@Param("idTopping") Integer idTopping);
 
 //    boolean existsByMaLo(String maLo);
-    Optional<LoTopping> findByMaLo(String maLo);
-    boolean existsByMaLoAndTopping_IdTopping(String maLo, Long idTopping);
+//    Optional<LoTopping> findByMaLo(String maLo);
+Optional<LoTopping> findByMaLoIgnoreCase(String maLo);
+    boolean existsByMaLoAndTopping_IdTopping(String maLo, Integer idTopping);
+
+    @Query("SELECT COUNT(l) FROM LoTopping l WHERE l.trangThai = 1 " +
+            "AND l.soLuongTon > 0 " +
+            "AND l.hanSuDung BETWEEN :tuNgay AND :denNgay")
+    long countSapHetHan(
+            @Param("tuNgay") java.time.LocalDate tuNgay,
+            @Param("denNgay") java.time.LocalDate denNgay
+    );
 }

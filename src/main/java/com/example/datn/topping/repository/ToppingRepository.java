@@ -20,4 +20,6 @@ public interface ToppingRepository extends JpaRepository<Topping, Integer> {
 
     // Check trùng tên để validate lúc thêm mới / cập nhật
     boolean existsByTenToppingIgnoreCase(String tenTopping);
+
+    long countByTrangThai(Integer trangThai);
 }

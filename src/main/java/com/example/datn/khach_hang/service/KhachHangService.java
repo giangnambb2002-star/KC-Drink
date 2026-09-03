@@ -6,6 +6,7 @@ import com.example.datn.khach_hang.dto.KhachHangRequest;
 import com.example.datn.khach_hang.dto.KhachHangResponse;
 import com.example.datn.khach_hang.entity.KhachHang;
 import com.example.datn.khach_hang.repository.KhachHangRepository;
+import com.example.datn.nhat_ky_he_thong.service.NhatKyHeThongService;
 import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.example.datn.tai_khoan.repository.TaiKhoanRepository;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,7 @@ public class KhachHangService {
     // THÊM: Inject các công cụ mã hóa và gửi mail
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
+    private final NhatKyHeThongService nhatKyHeThongService;
 
     public PageResponse<KhachHangResponse> getAll(
             String keyword,
@@ -109,7 +111,14 @@ public class KhachHangService {
         khachHang.setTaiKhoan(taiKhoan);
         khachHang.setTrangThai(1);
 
-        return toResponse(repository.save(khachHang));
+        KhachHang saved = repository.save(khachHang);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "THÊM",
+                "KHÁCH HÀNG",
+                saved.getIdKhachHang(),
+                "Thêm khách hàng " + saved.getTenKhachHang()
+        );
+        return toResponse(saved);
     }
 
     public KhachHangResponse update(Integer id, KhachHangRequest request) {
@@ -151,7 +160,14 @@ public class KhachHangService {
         khachHang.setNgaySinh(request.getNgaySinh());
         khachHang.setTaiKhoan(taiKhoan);
 
-        return toResponse(repository.save(khachHang));
+        KhachHang saved = repository.save(khachHang);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "CẬP NHẬT",
+                "KHÁCH HÀNG",
+                saved.getIdKhachHang(),
+                "Cập nhật khách hàng " + saved.getTenKhachHang()
+        );
+        return toResponse(saved);
     }
 
     public KhachHangResponse lock(Integer id) {
@@ -161,14 +177,28 @@ public class KhachHangService {
         if (khachHang.getIdKhachHang() == 1) {
             throw new RuntimeException("Không được khóa khách lẻ");
         }
-        return toResponse(repository.save(khachHang));
+        KhachHang saved = repository.save(khachHang);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "KHÓA",
+                "KHÁCH HÀNG",
+                saved.getIdKhachHang(),
+                "Khóa khách hàng " + saved.getTenKhachHang()
+        );
+        return toResponse(saved);
     }
 
     public KhachHangResponse unlock(Integer id) {
         KhachHang khachHang = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
         khachHang.setTrangThai(1);
-        return toResponse(repository.save(khachHang));
+        KhachHang saved = repository.save(khachHang);
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "MỞ KHÓA",
+                "KHÁCH HÀNG",
+                saved.getIdKhachHang(),
+                "Mở khóa khách hàng " + saved.getTenKhachHang()
+        );
+        return toResponse(saved);
     }
 
     private KhachHangResponse toResponse(KhachHang khachHang) {

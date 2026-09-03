@@ -10,6 +10,7 @@ import com.example.datn.nguyen_lieu.repository.LoNguyenLieuRepository;
 import com.example.datn.nguyen_lieu.repository.NguyenLieuRepository;
 import com.example.datn.nhan_vien.entity.NhanVien;
 import com.example.datn.nhan_vien.repository.NhanVienRepository;
+import com.example.datn.nhat_ky_he_thong.service.NhatKyHeThongService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,25 +32,12 @@ public class LoNguyenLieuService {
     private final LoNguyenLieuRepository repository;
     private final NguyenLieuRepository nguyenLieuRepository;
     private final NhanVienRepository nhanVienRepository;
+    private final NhatKyHeThongService nhatKyHeThongService;
 
-    public PageResponse<LoNguyenLieuResponse> getAll(
-            Integer idNguyenLieu,
-            Integer trangThai,
-            int page,
-            int size,
-            String sortBy,
-            String direction
-    ) {
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-
+    public PageResponse<LoNguyenLieuResponse> getAll(Integer idNguyenLieu, Integer trangThai, int page, int size, String sortBy, String direction) {
+        Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<LoNguyenLieu> pageData = repository.searchLoNguyenLieu(
-                idNguyenLieu,
-                trangThai,
-                pageable
-        );
+        Page<LoNguyenLieu> pageData = repository.searchLoNguyenLieu(idNguyenLieu, trangThai, pageable);
 
         return new PageResponse<>(
                 pageData.getContent().stream().map(this::toResponse).toList(),
@@ -68,16 +56,30 @@ public class LoNguyenLieuService {
         NhanVien nhanVien = nhanVienRepository.findById(request.getIdNhanVien())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin nhân viên nhập kho"));
 
+        String maLo = request.getMaLo().trim().toUpperCase();
+        if (repository.findByMaLoIgnoreCase(maLo).isPresent()) {
+            throw new RuntimeException("Mã lô " + maLo + " đã tồn tại");
+        }
+
         LoNguyenLieu lo = new LoNguyenLieu();
         lo.setNguyenLieu(nguyenLieu);
-        lo.setMaLo(request.getMaLo());
+        lo.setMaLo(maLo);
         lo.setNhanVien(nhanVien);
         lo.setSoLuongTon(request.getSoLuongTon());
         lo.setHanSuDung(request.getHanSuDung());
         lo.setNgayNhap(LocalDateTime.now());
         lo.setTrangThai(1);
 
-        return toResponse(repository.save(lo));
+        LoNguyenLieu savedLo = repository.save(lo);
+
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "NHẬP LÔ",
+                "LÔ NGUYÊN LIỆU",
+                savedLo.getIdLo(),
+                "Nhập lô " + savedLo.getMaLo() + " cho nguyên liệu " + nguyenLieu.getTenNguyenLieu() + ", số lượng " + savedLo.getSoLuongTon()
+        );
+
+        return toResponse(savedLo);
     }
 
     public LoNguyenLieuResponse lock(Integer id) {
@@ -85,7 +87,16 @@ public class LoNguyenLieuService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lô nguyên liệu"));
 
         lo.setTrangThai(0);
-        return toResponse(repository.save(lo));
+        LoNguyenLieu savedLo = repository.save(lo);
+
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "KHÓA",
+                "LÔ NGUYÊN LIỆU",
+                savedLo.getIdLo(),
+                "Khóa lô nguyên liệu " + savedLo.getMaLo()
+        );
+
+        return toResponse(savedLo);
     }
 
     public LoNguyenLieuResponse unlock(Integer id) {
@@ -93,12 +104,20 @@ public class LoNguyenLieuService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lô nguyên liệu"));
 
         lo.setTrangThai(1);
-        return toResponse(repository.save(lo));
+        LoNguyenLieu savedLo = repository.save(lo);
+
+        nhatKyHeThongService.ghiLogCurrentUser(
+                "MỞ KHÓA",
+                "LÔ NGUYÊN LIỆU",
+                savedLo.getIdLo(),
+                "Mở khóa lô nguyên liệu " + savedLo.getMaLo()
+        );
+
+        return toResponse(savedLo);
     }
 
     private LoNguyenLieuResponse toResponse(LoNguyenLieu lo) {
         LoNguyenLieuResponse response = new LoNguyenLieuResponse();
-
         response.setIdLo(lo.getIdLo());
         response.setMaLo(lo.getMaLo());
         response.setIdNguyenLieu(lo.getNguyenLieu().getIdNguyenLieu());
@@ -132,12 +151,9 @@ public class LoNguyenLieuService {
     @Transactional(rollbackFor = Exception.class)
     public void importExcelLoNguyenLieu(MultipartFile file, Integer idNhanVien) {
         NhanVien nhanVien = null;
-
         if (idNhanVien != null) {
             nhanVien = nhanVienRepository.findById(idNhanVien)
-                    .orElseThrow(() -> new RuntimeException(
-                            "Không tìm thấy nhân viên thực hiện import"
-                    ));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên thực hiện import"));
         }
 
         final NhanVien nhanVienImport = nhanVien;
@@ -145,7 +161,8 @@ public class LoNguyenLieuService {
         List<LoNguyenLieu> danhSachLo = ExcelHelper.readExcel(file, row -> {
             LoNguyenLieu lo = new LoNguyenLieu();
 
-            lo.setMaLo(ExcelHelper.getStringValue(row.getCell(0)));
+            String maLo = ExcelHelper.getStringValue(row.getCell(0));
+            lo.setMaLo(maLo != null ? maLo.trim().toUpperCase() : null);
 
             Integer idNguyenLieu = ExcelHelper.getIntegerValue(row.getCell(1));
             NguyenLieu tempNguyenLieu = new NguyenLieu();
@@ -154,7 +171,6 @@ public class LoNguyenLieuService {
 
             String soLuongText = ExcelHelper.getStringValue(row.getCell(2));
             lo.setSoLuongTon(parseSoLuong(soLuongText));
-
             lo.setHanSuDung(ExcelHelper.getLocalDateValue(row.getCell(3)));
             lo.setNgayNhap(LocalDateTime.now());
             lo.setTrangThai(1);
@@ -163,80 +179,67 @@ public class LoNguyenLieuService {
             return lo;
         });
 
+        int soLuongThemMoi = 0;
+        int soLuongBoQua = 0;
+
         for (LoNguyenLieu lo : danhSachLo) {
-            if (lo.getMaLo() == null || lo.getMaLo().trim().isEmpty()) {
+            if (lo.getMaLo() == null || lo.getMaLo().isEmpty()) {
+                soLuongBoQua++;
                 continue;
             }
 
-            String maLo = lo.getMaLo().trim();
+            String maLo = lo.getMaLo();
 
             if (maLo.length() > 50) {
-                throw new RuntimeException(
-                        "Lỗi file Excel: Mã lô [" + maLo + "] vượt quá 50 ký tự"
-                );
+                throw new RuntimeException("Lỗi file Excel: Mã lô [" + maLo + "] vượt quá 50 ký tự");
             }
 
-            lo.setMaLo(maLo);
-
-            if (lo.getNguyenLieu() == null
-                    || lo.getNguyenLieu().getIdNguyenLieu() == null) {
-                throw new RuntimeException(
-                        "Lỗi file Excel: ID nguyên liệu không được để trống"
-                );
+            if (lo.getNguyenLieu() == null || lo.getNguyenLieu().getIdNguyenLieu() == null) {
+                throw new RuntimeException("Lỗi file Excel: ID nguyên liệu không được để trống");
             }
 
             Integer idNguyenLieu = lo.getNguyenLieu().getIdNguyenLieu();
 
             NguyenLieu nguyenLieu = nguyenLieuRepository.findById(idNguyenLieu)
-                    .orElseThrow(() -> new RuntimeException(
-                            "Lỗi file Excel: Không tìm thấy nguyên liệu có ID = "
-                                    + idNguyenLieu
-                    ));
+                    .orElseThrow(() -> new RuntimeException("Lỗi file Excel: Không tìm thấy nguyên liệu có ID = " + idNguyenLieu));
 
             if (lo.getSoLuongTon() == null || lo.getSoLuongTon() <= 0) {
-                throw new RuntimeException(
-                        "Lỗi file Excel: Số lượng của mã lô ["
-                                + maLo
-                                + "] phải lớn hơn 0"
-                );
+                throw new RuntimeException("Lỗi file Excel: Số lượng của mã lô [" + maLo + "] phải lớn hơn 0");
             }
 
             if (lo.getHanSuDung() == null) {
-                throw new RuntimeException(
-                        "Lỗi file Excel: Hạn sử dụng của mã lô ["
-                                + maLo
-                                + "] không được để trống"
-                );
+                throw new RuntimeException("Lỗi file Excel: Hạn sử dụng của mã lô [" + maLo + "] không được để trống");
             }
 
             if (lo.getHanSuDung().isBefore(LocalDate.now())) {
-                throw new RuntimeException(
-                        "Lỗi file Excel: Mã lô ["
-                                + maLo
-                                + "] đã hết hạn"
-                );
+                throw new RuntimeException("Lỗi file Excel: Mã lô [" + maLo + "] đã hết hạn");
             }
 
-            Optional<LoNguyenLieu> existingLoOpt = repository.findByMaLo(maLo);
+            Optional<LoNguyenLieu> existingLoOpt = repository.findByMaLoIgnoreCase(maLo);
 
             if (existingLoOpt.isPresent()) {
                 LoNguyenLieu existingLo = existingLoOpt.get();
 
-                if (!existingLo.getNguyenLieu()
-                        .getIdNguyenLieu()
-                        .equals(idNguyenLieu)) {
-                    throw new RuntimeException(
-                            "Lỗi file Excel: Mã lô ["
-                                    + maLo
-                                    + "] đã tồn tại nhưng thuộc nguyên liệu khác"
-                    );
+                if (!existingLo.getNguyenLieu().getIdNguyenLieu().equals(idNguyenLieu)) {
+                    throw new RuntimeException("Lỗi file Excel: Mã lô [" + maLo + "] đã tồn tại nhưng thuộc nguyên liệu khác");
                 }
 
+                soLuongBoQua++;
                 continue;
             }
 
             lo.setNguyenLieu(nguyenLieu);
             repository.save(lo);
+            soLuongThemMoi++;
+        }
+
+        if (soLuongThemMoi > 0) {
+            nhatKyHeThongService.ghiLogCurrentUser(
+                    "IMPORT EXCEL",
+                    "LÔ NGUYÊN LIỆU",
+                    null,
+                    "Import Excel lô nguyên liệu: thêm mới " + soLuongThemMoi + " lô, bỏ qua " + soLuongBoQua + " dòng"
+            );
         }
     }
 
@@ -248,9 +251,7 @@ public class LoNguyenLieuService {
         try {
             return Double.parseDouble(value.trim().replace(",", "."));
         } catch (NumberFormatException e) {
-            throw new RuntimeException(
-                    "Số lượng trong file Excel không hợp lệ: " + value
-            );
+            throw new RuntimeException("Số lượng trong file Excel không hợp lệ: " + value);
         }
     }
 }

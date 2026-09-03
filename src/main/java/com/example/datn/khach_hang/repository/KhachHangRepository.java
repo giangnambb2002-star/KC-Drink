@@ -33,5 +33,5 @@ public interface KhachHangRepository
     // ================ THÊM MỚI TẠI ĐÂY ================
     @Query(value = "SELECT * FROM KHACH_HANG WHERE DAY(ngay_sinh) = :day AND MONTH(ngay_sinh) = :month AND trang_thai = 1", nativeQuery = true)
     List<KhachHang> findKhachHangSinhNhat(@Param("day") int day, @Param("month") int month);
-
+    long countByTrangThai(Integer trangThai);
 }
