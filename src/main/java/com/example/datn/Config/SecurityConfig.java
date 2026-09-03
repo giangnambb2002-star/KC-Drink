@@ -117,6 +117,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/nhat-ky-he-thong/**").hasRole("ADMIN")
                         .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
                         // Khóa chặt các API còn lại
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
