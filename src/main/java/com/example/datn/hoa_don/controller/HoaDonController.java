@@ -1,5 +1,4 @@
 package com.example.datn.hoa_don.controller;
-
 import com.example.datn.common.ApiResponse;
 import com.example.datn.hoa_don.dto.ApDungVoucherRequest;
 import com.example.datn.hoa_don.dto.CapNhatKhachHangHoaDonRequest;
@@ -12,18 +11,17 @@ import com.example.datn.hoa_don.dto.ThemMonRequest;
 import com.example.datn.hoa_don.dto.ThemToppingRequest;
 import com.example.datn.hoa_don.dto.VoucherKhaDungResponse;
 import com.example.datn.hoa_don.service.HoaDonService;
+import com.example.datn.payos.dto.PayOSCreateResponse;
+import com.example.datn.payos.dto.PayOSPaymentStatusResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
-
 @RestController
 @RequestMapping("/api/hoa-don")
 @RequiredArgsConstructor
 public class HoaDonController {
-
     private final HoaDonService service;
-
     @GetMapping("/{id}")
     public ApiResponse<HoaDonResponse> getById(@PathVariable Integer id) {
         return new ApiResponse<>(
@@ -32,11 +30,9 @@ public class HoaDonController {
                 service.getById(id)
         );
     }
-
     @PostMapping("/offline")
     public ApiResponse<HoaDonResponse> taoHoaDonOffline(
             @RequestBody TaoHoaDonOfflineRequest request) {
-
         return new ApiResponse<>(
                 201,
                 "Tạo hóa đơn tại quầy thành công",
@@ -47,7 +43,6 @@ public class HoaDonController {
     public ApiResponse<HoaDonResponse> themMon(
             @PathVariable Integer idHoaDon,
             @RequestBody ThemMonRequest request) {
-
         return new ApiResponse<>(
                 200,
                 "Thêm món vào hóa đơn thành công",
@@ -58,18 +53,15 @@ public class HoaDonController {
     public ApiResponse<HoaDonResponse> capNhatSoLuong(
             @PathVariable Integer idChiTiet,
             @RequestBody CapNhatSoLuongRequest request) {
-
         return new ApiResponse<>(
                 200,
                 "Cập nhật số lượng thành công",
                 service.capNhatSoLuong(idChiTiet, request)
         );
     }
-
     @DeleteMapping("/chi-tiet/{idChiTiet}")
     public ApiResponse<HoaDonResponse> xoaMon(
             @PathVariable Integer idChiTiet) {
-
         return new ApiResponse<>(
                 200,
                 "Xóa món khỏi hóa đơn thành công",
@@ -80,18 +72,43 @@ public class HoaDonController {
     public ApiResponse<HoaDonResponse> thanhToanHoaDon(
             @PathVariable Integer id,
             @RequestBody ThanhToanHoaDonRequest request) {
-
         return new ApiResponse<>(
                 200,
                 "Thanh toán hóa đơn thành công",
                 service.thanhToanHoaDon(id, request)
         );
     }
+    @PostMapping("/{id}/payos")
+    public ApiResponse<PayOSCreateResponse> taoThanhToanPayOS(
+            @PathVariable Integer id) {
+        return new ApiResponse<>(
+                200,
+                "Tạo mã thanh toán PayOS thành công",
+                service.taoThanhToanPayOS(id)
+        );
+    }
+    @GetMapping("/{id}/payos/status")
+    public ApiResponse<PayOSPaymentStatusResponse> layTrangThaiPayOS(
+            @PathVariable Integer id) {
+        return new ApiResponse<>(
+                200,
+                "Lấy trạng thái thanh toán PayOS thành công",
+                service.layTrangThaiPayOS(id)
+        );
+    }
+    @PostMapping("/{id}/payos/cancel")
+    public ApiResponse<PayOSPaymentStatusResponse> huyThanhToanPayOS(
+            @PathVariable Integer id) {
+        return new ApiResponse<>(
+                200,
+                "Hủy thanh toán PayOS thành công",
+                service.huyThanhToanPayOS(id)
+        );
+    }
     @PostMapping("/chi-tiet/{idChiTiet}/topping")
     public ApiResponse<HoaDonResponse> themTopping(
             @PathVariable Integer idChiTiet,
             @Valid @RequestBody ThemToppingRequest request) {
-
         return new ApiResponse<>(
                 201,
                 "Thêm topping vào hóa đơn thành công",
@@ -108,7 +125,6 @@ public class HoaDonController {
                 service.capNhatTopping(idHdctTopping, request)
         );
     }
-
     @DeleteMapping("/topping/{idHdctTopping}")
     public ApiResponse<HoaDonResponse> xoaTopping(
             @PathVariable Integer idHdctTopping) {
@@ -130,7 +146,6 @@ public class HoaDonController {
     public ApiResponse<HoaDonResponse> capNhatKhachHang(
             @PathVariable Integer id,
             @RequestBody CapNhatKhachHangHoaDonRequest request) {
-
         return new ApiResponse<>(
                 200,
                 "Cập nhật khách hàng cho hóa đơn thành công",
@@ -141,7 +156,6 @@ public class HoaDonController {
     public ApiResponse<HoaDonResponse> apDungVoucher(
             @PathVariable Integer id,
             @RequestBody ApDungVoucherRequest request) {
-
         return new ApiResponse<>(
                 200,
                 "Áp dụng voucher thành công",
@@ -151,7 +165,6 @@ public class HoaDonController {
     @DeleteMapping("/{id}/voucher")
     public ApiResponse<HoaDonResponse> boVoucher(
             @PathVariable Integer id) {
-
         return new ApiResponse<>(
                 200,
                 "Bỏ voucher thành công",

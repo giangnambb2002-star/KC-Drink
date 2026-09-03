@@ -45,6 +45,15 @@ public class HoaDon {
     @Column(name = "hinh_thuc_thanh_toan", length = 50)
     private String hinhThucThanhToan;
 
+    @Column(name = "payos_order_code")
+    private Long payosOrderCode;
+
+    @Column(name = "payos_payment_link_id", length = 100)
+    private String payosPaymentLinkId;
+
+    @Column(name = "payos_status", length = 20)
+    private String payosStatus;
+
     @Column(name = "trang_thai", length = 20)
     private String trangThai;
 
