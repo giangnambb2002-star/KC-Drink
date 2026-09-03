@@ -2,6 +2,7 @@ package com.example.datn.van_chuyen.controller;
 
 import com.example.datn.common.ApiResponse;
 import com.example.datn.van_chuyen.dto.PhiVanChuyenResponse;
+import com.example.datn.van_chuyen.dto.TaoDonGhnRequest;
 import com.example.datn.van_chuyen.dto.TinhPhiRequest;
 import com.example.datn.van_chuyen.service.GhnService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -76,6 +77,60 @@ public class GhnController {
                         request.getDistrictId(),
                         request.getWardCode()
                 )
+        );
+    }
+
+    @PostMapping("/order")
+    public ApiResponse<JsonNode> createOrder(
+            @Valid @RequestBody TaoDonGhnRequest request
+    ) {
+
+        return new ApiResponse<>(
+                200,
+                "Tạo đơn GHN thành công",
+                service.createOrder(request)
+        );
+    }
+    @PostMapping("/preview")
+    public ApiResponse<JsonNode> previewOrder(
+            @Valid @RequestBody TaoDonGhnRequest request
+    ) {
+        return new ApiResponse<>(
+                200,
+                "Xem trước đơn GHN thành công",
+                service.previewOrder(request)
+        );
+    }
+    @GetMapping("/services/{districtId}")
+    public ApiResponse<JsonNode> getAvailableServices(
+            @PathVariable Integer districtId
+    ) {
+        return new ApiResponse<>(
+                200,
+                "Lấy danh sách dịch vụ GHN thành công",
+                service.getAvailableServices(districtId)
+        );
+    }
+
+    @GetMapping("/order/{orderCode}")
+    public ApiResponse<JsonNode> getOrderDetail(
+            @PathVariable String orderCode
+    ) {
+        return new ApiResponse<>(
+                200,
+                "Lấy thông tin đơn GHN thành công",
+                service.getOrderDetail(orderCode)
+        );
+    }
+
+    @PostMapping("/order/{orderCode}/cancel")
+    public ApiResponse<JsonNode> cancelOrder(
+            @PathVariable String orderCode
+    ) {
+        return new ApiResponse<>(
+                200,
+                "Hủy đơn GHN thành công",
+                service.cancelOrder(orderCode)
         );
     }
 }
