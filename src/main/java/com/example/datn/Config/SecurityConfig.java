@@ -61,6 +61,10 @@ public class SecurityConfig {
                                 "/api/san-pham/manage",
                                 "/api/san-pham/manage/**"
                         ).hasRole("ADMIN")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/san-pham/hinh-anh/**"
+                        ).permitAll()
                         // STAFF được xem sản phẩm / size
                         .requestMatchers(
                                 HttpMethod.GET,

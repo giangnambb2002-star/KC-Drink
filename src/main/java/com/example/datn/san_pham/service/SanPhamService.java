@@ -7,6 +7,9 @@ import com.example.datn.san_pham.repository.SanPhamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.core.io.Resource;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import com.example.datn.san_pham.dto.SanPhamRequest;
@@ -20,6 +23,7 @@ import java.util.List;
 public class SanPhamService {
 
     private final SanPhamRepository repository;
+    private final SanPhamImageStorageService imageStorageService;
 
 
 
@@ -55,7 +59,6 @@ public class SanPhamService {
         sanPham.setTenSanPham(tenSanPham);
         sanPham.setGia(request.getGia());
         sanPham.setMoTa(request.getMoTa());
-        sanPham.setHinhAnh(request.getHinhAnh());
         sanPham.setIdDanhMuc(request.getIdDanhMuc());
         sanPham.setTrangThai(1);
         sanPham.setNgayTao(LocalDateTime.now());
@@ -78,7 +81,6 @@ public class SanPhamService {
         sanPham.setTenSanPham(tenSanPham);
         sanPham.setGia(request.getGia());
         sanPham.setMoTa(request.getMoTa());
-        sanPham.setHinhAnh(request.getHinhAnh());
         sanPham.setIdDanhMuc(request.getIdDanhMuc());
 
         return toResponse(repository.save(sanPham));
@@ -99,14 +101,27 @@ public class SanPhamService {
     }
 
     public PageResponse<SanPhamResponse> getSanPhamDangBan(
-            int page, int size, String sortBy, String direction) {
-
+            String keyword,
+            int page,
+            int size,
+            String sortBy,
+            String direction
+    ) {
         Sort sort = direction.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<SanPham> pageData = repository.findByTrangThai(1, pageable);
+
+        String keywordChuanHoa = keyword == null
+                ? null
+                : keyword.trim();
+
+        Page<SanPham> pageData = repository.searchSanPham(
+                keywordChuanHoa,
+                1,
+                pageable
+        );
 
         List<SanPhamResponse> content = pageData.getContent()
                 .stream()
@@ -138,5 +153,54 @@ public class SanPhamService {
         response.setTrangThai(sanPham.getTrangThai());
         response.setIdDanhMuc(sanPham.getIdDanhMuc());
         return response;
+    }
+    @Transactional
+    public SanPhamResponse uploadHinhAnh(
+            Integer id,
+            MultipartFile file
+    ) {
+        SanPham sanPham = repository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Không tìm thấy sản phẩm"
+                        )
+                );
+
+        String hinhAnhCu = sanPham.getHinhAnh();
+        String hinhAnhMoi = imageStorageService.save(file);
+
+        try {
+            sanPham.setHinhAnh(hinhAnhMoi);
+
+            SanPham daLuu = repository.saveAndFlush(sanPham);
+            imageStorageService.deleteByUrl(hinhAnhCu);
+
+            return toResponse(daLuu);
+        } catch (RuntimeException exception) {
+            imageStorageService.deleteByUrl(hinhAnhMoi);
+            throw exception;
+        }
+    }
+
+    @Transactional
+    public SanPhamResponse deleteHinhAnh(Integer id) {
+        SanPham sanPham = repository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Không tìm thấy sản phẩm"
+                        )
+                );
+
+        String hinhAnhCu = sanPham.getHinhAnh();
+        sanPham.setHinhAnh(null);
+
+        SanPham daLuu = repository.saveAndFlush(sanPham);
+        imageStorageService.deleteByUrl(hinhAnhCu);
+
+        return toResponse(daLuu);
+    }
+
+    public Resource loadHinhAnh(String fileName) {
+        return imageStorageService.load(fileName);
     }
 }
