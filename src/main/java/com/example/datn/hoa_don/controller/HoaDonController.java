@@ -1,25 +1,40 @@
 package com.example.datn.hoa_don.controller;
+
 import com.example.datn.common.ApiResponse;
+import com.example.datn.common.PageResponse;
 import com.example.datn.hoa_don.dto.ApDungVoucherRequest;
 import com.example.datn.hoa_don.dto.CapNhatKhachHangHoaDonRequest;
 import com.example.datn.hoa_don.dto.CapNhatSoLuongRequest;
 import com.example.datn.hoa_don.dto.CapNhatToppingRequest;
+import com.example.datn.hoa_don.dto.HoaDonListResponse;
 import com.example.datn.hoa_don.dto.HoaDonResponse;
 import com.example.datn.hoa_don.dto.TaoHoaDonOfflineRequest;
 import com.example.datn.hoa_don.dto.ThanhToanHoaDonRequest;
 import com.example.datn.hoa_don.dto.ThemMonRequest;
 import com.example.datn.hoa_don.dto.ThemToppingRequest;
-import com.example.datn.van_chuyen.dto.ThietLapGiaoHangRequest;
-import com.example.datn.van_chuyen.dto.VanDonGhnResponse;
-import com.example.datn.van_chuyen.service.VanDonGhnService;
 import com.example.datn.hoa_don.dto.VoucherKhaDungResponse;
 import com.example.datn.hoa_don.service.HoaDonService;
 import com.example.datn.payos.dto.PayOSCreateResponse;
 import com.example.datn.payos.dto.PayOSPaymentStatusResponse;
+import com.example.datn.van_chuyen.dto.ThietLapGiaoHangRequest;
+import com.example.datn.van_chuyen.dto.VanDonGhnResponse;
+import com.example.datn.van_chuyen.service.VanDonGhnService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/hoa-don")
 @RequiredArgsConstructor
@@ -243,6 +258,44 @@ public class HoaDonController {
                 200,
                 "Hủy đơn GHN thành công",
                 vanDonGhnService.huyDonGhn(id)
+        );
+    }
+    @GetMapping
+    public ApiResponse<PageResponse<HoaDonListResponse>> getDanhSachHoaDon(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String trangThai,
+            @RequestParam(required = false) String loaiHoaDon,
+            @RequestParam(required = false) String hinhThucThanhToan,
+            @RequestParam(required = false) Boolean coGiaoHang,
+            @RequestParam(required = false) String trangThaiGhn,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    LocalDate tuNgay,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                    LocalDate denNgay,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "ngayTao") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction
+    ) {
+        return new ApiResponse<>(
+                200,
+                "Lấy danh sách hóa đơn thành công",
+                service.getDanhSachHoaDon(
+                        keyword,
+                        trangThai,
+                        loaiHoaDon,
+                        hinhThucThanhToan,
+                        coGiaoHang,
+                        trangThaiGhn,
+                        tuNgay,
+                        denNgay,
+                        page,
+                        size,
+                        sortBy,
+                        direction
+                )
         );
     }
 }

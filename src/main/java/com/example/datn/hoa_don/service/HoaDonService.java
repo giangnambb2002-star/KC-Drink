@@ -1,13 +1,16 @@
 package com.example.datn.hoa_don.service;
+
 import com.example.datn.ban_thanh_pham.entity.CongThucSanPhamBtp;
 import com.example.datn.ban_thanh_pham.repository.CongThucSanPhamBtpRepository;
 import com.example.datn.ban_thanh_pham.service.BanThanhPhamKhoService;
+import com.example.datn.common.PageResponse;
 import com.example.datn.hoa_don.dto.ApDungVoucherRequest;
 import com.example.datn.hoa_don.dto.CapNhatKhachHangHoaDonRequest;
 import com.example.datn.hoa_don.dto.CapNhatSoLuongRequest;
 import com.example.datn.hoa_don.dto.CapNhatToppingRequest;
 import com.example.datn.hoa_don.dto.HdctToppingResponse;
 import com.example.datn.hoa_don.dto.HoaDonChiTietResponse;
+import com.example.datn.hoa_don.dto.HoaDonListResponse;
 import com.example.datn.hoa_don.dto.HoaDonResponse;
 import com.example.datn.hoa_don.dto.TaoHoaDonOfflineRequest;
 import com.example.datn.hoa_don.dto.ThanhToanHoaDonRequest;
@@ -30,34 +33,41 @@ import com.example.datn.nhan_vien.repository.NhanVienRepository;
 import com.example.datn.payos.dto.PayOSCreateResponse;
 import com.example.datn.payos.dto.PayOSPaymentStatusResponse;
 import com.example.datn.payos.service.PayOSService;
-import com.example.datn.san_pham.entity.SanPhamSize;
-import com.example.datn.san_pham.repository.SanPhamRepository;
-import com.example.datn.topping.repository.LoToppingRepository;
-import com.example.datn.topping.service.ToppingKhoService;
 import com.example.datn.san_pham.entity.SanPham;
+import com.example.datn.san_pham.entity.SanPhamSize;
 import com.example.datn.san_pham.entity.Size;
+import com.example.datn.san_pham.repository.SanPhamRepository;
 import com.example.datn.san_pham.repository.SanPhamSizeRepository;
 import com.example.datn.san_pham.repository.SizeRepository;
 import com.example.datn.topping.entity.Topping;
+import com.example.datn.topping.repository.LoToppingRepository;
 import com.example.datn.topping.repository.ToppingRepository;
+import com.example.datn.topping.service.ToppingKhoService;
+import com.example.datn.van_chuyen.entity.VanDonGhn;
+import com.example.datn.van_chuyen.repository.VanDonGhnRepository;
 import com.example.datn.van_chuyen.service.VanDonGhnService;
 import com.example.datn.voucher.entity.Voucher;
 import com.example.datn.voucher.repository.VoucherRepository;
-import com.example.datn.hoa_don.dto.VoucherKhaDungResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -80,6 +90,7 @@ public class HoaDonService {
     private final VoucherRepository voucherRepository;
     private final PayOSService payOSService;
     private final VanDonGhnService vanDonGhnService;
+    private final VanDonGhnRepository vanDonGhnRepository;
 
     public HoaDonResponse getById(Integer id) {
         HoaDon hoaDon = repository.findById(id)
@@ -287,7 +298,9 @@ public class HoaDonService {
         BigDecimal giamGia = BigDecimal.ZERO;
         Voucher voucher = hoaDon.getVoucher();
         if (voucher != null) {
-            if (tongTien.compareTo(BigDecimal.ZERO) <= 0) {
+            if (voucher.getIdKhachHang() != null && (hoaDon.getKhachHang() == null || !voucher.getIdKhachHang().equals(hoaDon.getKhachHang().getIdKhachHang()))) {
+                hoaDon.setVoucher(null);
+            } else if (tongTien.compareTo(BigDecimal.ZERO) <= 0) {
                 hoaDon.setVoucher(null);
             } else if (voucher.getDieuKien() != null && tongTien.compareTo(voucher.getDieuKien()) < 0) {
                 hoaDon.setVoucher(null);
@@ -658,7 +671,8 @@ public class HoaDonService {
         }
         if (request.getIdKhachHang() == null) {
             hoaDon.setKhachHang(null);
-            return toResponse(repository.save(hoaDon));
+            tinhLaiTongTien(hoaDon);
+            return toResponse(hoaDon);
         }
         KhachHang khachHang = khachHangRepository.findById(request.getIdKhachHang())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
@@ -666,7 +680,8 @@ public class HoaDonService {
             throw new RuntimeException("Khách hàng đang bị khóa");
         }
         hoaDon.setKhachHang(khachHang);
-        return toResponse(repository.save(hoaDon));
+        tinhLaiTongTien(hoaDon);
+        return toResponse(hoaDon);
     }
     @Transactional
     public HoaDonResponse apDungVoucher(Integer idHoaDon, ApDungVoucherRequest request) {
@@ -997,5 +1012,146 @@ public class HoaDonService {
                 && !status.isBlank()
                 && !"CANCELLED".equalsIgnoreCase(status)
                 && !"EXPIRED".equalsIgnoreCase(status);
+    }
+
+    private HoaDonListResponse toListResponse(
+            HoaDon hoaDon,
+            VanDonGhn vanDon
+    ) {
+        KhachHang khachHang = hoaDon.getKhachHang();
+        NhanVien nhanVien = hoaDon.getNhanVien();
+
+        return HoaDonListResponse.builder()
+                .idHoaDon(hoaDon.getIdHoaDon())
+                .maHoaDon(hoaDon.getMaHoaDon())
+                .loaiHoaDon(hoaDon.getLoaiHoaDon())
+                .ngayTao(hoaDon.getNgayTao())
+                .tongTien(hoaDon.getTongTien())
+                .giamGia(hoaDon.getGiamGia())
+                .phiVanChuyen(hoaDon.getPhiVanChuyen())
+                .thanhTien(hoaDon.getThanhTien())
+                .hinhThucThanhToan(hoaDon.getHinhThucThanhToan())
+                .payosStatus(hoaDon.getPayosStatus())
+                .trangThai(hoaDon.getTrangThai())
+                .idKhachHang(khachHang == null ? null : khachHang.getIdKhachHang())
+                .tenKhachHang(khachHang == null ? null : khachHang.getTenKhachHang())
+                .sdtKhachHang(khachHang == null ? null : khachHang.getSdt())
+                .idNhanVien(nhanVien == null ? null : nhanVien.getIdNhanVien())
+                .tenNhanVien(nhanVien == null ? null : nhanVien.getTenNhanVien())
+                .coGiaoHang(vanDon != null)
+                .maVanDonGhn(vanDon == null ? null : vanDon.getMaVanDonGhn())
+                .trangThaiVanDon(vanDon == null ? null : vanDon.getTrangThai())
+                .trangThaiGhn(vanDon == null ? null : vanDon.getTrangThaiGhn())
+                .thoiGianGiaoDuKien(vanDon == null ? null : vanDon.getThoiGianGiaoDuKien())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<HoaDonListResponse> getDanhSachHoaDon(
+            String keyword,
+            String trangThai,
+            String loaiHoaDon,
+            String hinhThucThanhToan,
+            Boolean coGiaoHang,
+            String trangThaiGhn,
+            LocalDate tuNgay,
+            LocalDate denNgay,
+            int page,
+            int size,
+            String sortBy,
+            String direction
+    ) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+
+        Set<String> allowedSortFields = Set.of(
+                "idHoaDon",
+                "maHoaDon",
+                "ngayTao",
+                "tongTien",
+                "giamGia",
+                "phiVanChuyen",
+                "thanhTien",
+                "loaiHoaDon",
+                "trangThai",
+                "hinhThucThanhToan"
+        );
+
+        String safeSortBy = allowedSortFields.contains(sortBy)
+                ? sortBy
+                : "ngayTao";
+
+        Sort.Direction sortDirection =
+                "asc".equalsIgnoreCase(direction)
+                        ? Sort.Direction.ASC
+                        : Sort.Direction.DESC;
+
+        Pageable pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(sortDirection, safeSortBy)
+        );
+
+        String normalizedKeyword = keyword == null
+                ? null
+                : keyword.trim();
+
+        LocalDateTime tuNgayTime = tuNgay == null
+                ? null
+                : tuNgay.atStartOfDay();
+
+        LocalDateTime denNgayExclusive = denNgay == null
+                ? null
+                : denNgay.plusDays(1).atStartOfDay();
+
+        Page<HoaDon> hoaDonPage = repository.searchHoaDon(
+                normalizedKeyword,
+                trangThai,
+                loaiHoaDon,
+                hinhThucThanhToan,
+                coGiaoHang,
+                trangThaiGhn,
+                tuNgayTime,
+                denNgayExclusive,
+                pageable
+        );
+
+        List<Integer> idHoaDonList = hoaDonPage.getContent()
+                .stream()
+                .map(HoaDon::getIdHoaDon)
+                .toList();
+
+        Map<Integer, VanDonGhn> vanDonMap;
+
+        if (idHoaDonList.isEmpty()) {
+            vanDonMap = Map.of();
+        } else {
+            vanDonMap = vanDonGhnRepository
+                    .findAllByHoaDon_IdHoaDonIn(idHoaDonList)
+                    .stream()
+                    .collect(Collectors.toMap(
+                            vanDon -> vanDon.getHoaDon().getIdHoaDon(),
+                            Function.identity(),
+                            (oldValue, newValue) -> oldValue
+                    ));
+        }
+
+        List<HoaDonListResponse> content = hoaDonPage
+                .getContent()
+                .stream()
+                .map(hoaDon -> toListResponse(
+                        hoaDon,
+                        vanDonMap.get(hoaDon.getIdHoaDon())
+                ))
+                .toList();
+
+        return new PageResponse<>(
+                content,
+                hoaDonPage.getNumber(),
+                hoaDonPage.getSize(),
+                hoaDonPage.getTotalElements(),
+                hoaDonPage.getTotalPages(),
+                hoaDonPage.isLast()
+        );
     }
 }
