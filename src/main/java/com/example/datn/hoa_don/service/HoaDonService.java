@@ -40,6 +40,7 @@ import com.example.datn.san_pham.repository.SanPhamSizeRepository;
 import com.example.datn.san_pham.repository.SizeRepository;
 import com.example.datn.topping.entity.Topping;
 import com.example.datn.topping.repository.ToppingRepository;
+import com.example.datn.van_chuyen.service.VanDonGhnService;
 import com.example.datn.voucher.entity.Voucher;
 import com.example.datn.voucher.repository.VoucherRepository;
 import com.example.datn.hoa_don.dto.VoucherKhaDungResponse;
@@ -51,10 +52,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -76,6 +79,7 @@ public class HoaDonService {
     private final ToppingRepository toppingRepository;
     private final VoucherRepository voucherRepository;
     private final PayOSService payOSService;
+    private final VanDonGhnService vanDonGhnService;
 
     public HoaDonResponse getById(Integer id) {
         HoaDon hoaDon = repository.findById(id)
@@ -278,7 +282,7 @@ public class HoaDonService {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             tongTien = tongTien.add(tienTopping);
         }
-        tongTien = tongTien.setScale(0, BigDecimal.ROUND_HALF_UP);
+        tongTien = tongTien.setScale(0, RoundingMode.HALF_UP);
         hoaDon.setTongTien(tongTien);
         BigDecimal giamGia = BigDecimal.ZERO;
         Voucher voucher = hoaDon.getVoucher();
@@ -292,10 +296,13 @@ public class HoaDonService {
             }
         }
         hoaDon.setGiamGia(giamGia);
+        BigDecimal phiVanChuyen = hoaDon.getPhiVanChuyen() == null
+                ? BigDecimal.ZERO : hoaDon.getPhiVanChuyen();
         BigDecimal thanhTien = tongTien
                 .subtract(giamGia)
+                .add(phiVanChuyen)
                 .max(BigDecimal.ZERO)
-                .setScale(0, BigDecimal.ROUND_HALF_UP);
+                .setScale(0, RoundingMode.HALF_UP);
         hoaDon.setThanhTien(thanhTien);
         repository.save(hoaDon);
     }
@@ -304,7 +311,7 @@ public class HoaDonService {
         if ("PERCENT".equals(voucher.getLoaiVoucher())) {
             giamGia = tongTien
                     .multiply(voucher.getGiaTriGiam())
-                    .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             if (voucher.getGiamToiDa() != null
                     && giamGia.compareTo(voucher.getGiamToiDa()) > 0) {
                 giamGia = voucher.getGiamToiDa();
@@ -312,7 +319,7 @@ public class HoaDonService {
         } else if ("FIXED".equals(voucher.getLoaiVoucher())) {
             giamGia = voucher.getGiaTriGiam();
         }
-        return giamGia.min(tongTien).setScale(0, BigDecimal.ROUND_HALF_UP);
+        return giamGia.min(tongTien).setScale(0, RoundingMode.HALF_UP);
     }
 
     private HoaDonResponse toResponse(HoaDon hoaDon) {
@@ -513,7 +520,9 @@ public class HoaDonService {
         }
         hoaDon.setHinhThucThanhToan(hinhThucThanhToan);
         hoaDon.setTrangThai("DA_THANH_TOAN");
-        return toResponse(repository.save(hoaDon));
+        HoaDon hoaDonDaLuu = repository.save(hoaDon);
+        vanDonGhnService.capNhatSauThanhToan(idHoaDon);
+        return toResponse(hoaDonDaLuu);
     }
     @Transactional
     public HoaDonResponse themTopping(Integer idChiTiet, ThemToppingRequest request) {
@@ -629,7 +638,9 @@ public class HoaDonService {
     public HoaDonResponse huyHoaDon(Integer idHoaDon) {
         HoaDon hoaDon = getHoaDonChoThanhToanDeSua(idHoaDon);
         hoaDon.setTrangThai("DA_HUY");
-        return toResponse(repository.save(hoaDon));
+        HoaDon hoaDonDaLuu = repository.save(hoaDon);
+        vanDonGhnService.capNhatSauHuyHoaDon(idHoaDon);
+        return toResponse(hoaDonDaLuu);
     }
     @Transactional
     public HoaDonResponse capNhatKhachHang(
@@ -637,6 +648,14 @@ public class HoaDonService {
             CapNhatKhachHangHoaDonRequest request
     ) {
         HoaDon hoaDon = getHoaDonChoThanhToanDeSua(idHoaDon);
+        Integer idKhachHangHienTai = hoaDon.getKhachHang() == null
+                ? null : hoaDon.getKhachHang().getIdKhachHang();
+        if (vanDonGhnService.coThongTinGiaoHang(idHoaDon)
+                && !Objects.equals(idKhachHangHienTai, request.getIdKhachHang())) {
+            throw new RuntimeException(
+                    "Vui lòng bỏ giao hàng trước khi thay đổi khách hàng"
+            );
+        }
         if (request.getIdKhachHang() == null) {
             hoaDon.setKhachHang(null);
             return toResponse(repository.save(hoaDon));
@@ -689,7 +708,7 @@ public class HoaDonService {
         if ("PERCENT".equals(voucher.getLoaiVoucher())) {
             soTienGiam = tongTien
                     .multiply(voucher.getGiaTriGiam())
-                    .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             if (voucher.getGiamToiDa() != null &&
                     soTienGiam.compareTo(voucher.getGiamToiDa()) > 0) {
                 soTienGiam = voucher.getGiamToiDa();
@@ -701,13 +720,16 @@ public class HoaDonService {
         }
         soTienGiam = soTienGiam
                 .min(tongTien)
-                .setScale(0, BigDecimal.ROUND_HALF_UP);
+                .setScale(0, RoundingMode.HALF_UP);
+        BigDecimal phiVanChuyen = hoaDon.getPhiVanChuyen() == null
+                ? BigDecimal.ZERO : hoaDon.getPhiVanChuyen();
         hoaDon.setVoucher(voucher);
         hoaDon.setGiamGia(soTienGiam);
         hoaDon.setThanhTien(
                 tongTien.subtract(soTienGiam)
+                        .add(phiVanChuyen)
                         .max(BigDecimal.ZERO)
-                        .setScale(0, BigDecimal.ROUND_HALF_UP)
+                        .setScale(0, RoundingMode.HALF_UP)
         );
         return toResponse(repository.save(hoaDon));
     }
@@ -763,7 +785,7 @@ public class HoaDonService {
         if ("PERCENT".equals(voucher.getLoaiVoucher())) {
             soTienGiam = tongTien
                     .multiply(voucher.getGiaTriGiam())
-                    .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             if (voucher.getGiamToiDa() != null
                     && soTienGiam.compareTo(voucher.getGiamToiDa()) > 0) {
                 soTienGiam = voucher.getGiamToiDa();
@@ -771,7 +793,7 @@ public class HoaDonService {
         } else if ("FIXED".equals(voucher.getLoaiVoucher())) {
             soTienGiam = voucher.getGiaTriGiam();
         }
-        return soTienGiam.min(tongTien).setScale(0, BigDecimal.ROUND_HALF_UP);
+        return soTienGiam.min(tongTien).setScale(0, RoundingMode.HALF_UP);
     }
     private void kiemTraVoucherThanhToan(HoaDon hoaDon) {
         Voucher voucher = hoaDon.getVoucher();

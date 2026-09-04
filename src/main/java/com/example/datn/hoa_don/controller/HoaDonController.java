@@ -9,6 +9,9 @@ import com.example.datn.hoa_don.dto.TaoHoaDonOfflineRequest;
 import com.example.datn.hoa_don.dto.ThanhToanHoaDonRequest;
 import com.example.datn.hoa_don.dto.ThemMonRequest;
 import com.example.datn.hoa_don.dto.ThemToppingRequest;
+import com.example.datn.van_chuyen.dto.ThietLapGiaoHangRequest;
+import com.example.datn.van_chuyen.dto.VanDonGhnResponse;
+import com.example.datn.van_chuyen.service.VanDonGhnService;
 import com.example.datn.hoa_don.dto.VoucherKhaDungResponse;
 import com.example.datn.hoa_don.service.HoaDonService;
 import com.example.datn.payos.dto.PayOSCreateResponse;
@@ -22,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class HoaDonController {
     private final HoaDonService service;
+    private final VanDonGhnService vanDonGhnService;
+
     @GetMapping("/{id}")
     public ApiResponse<HoaDonResponse> getById(@PathVariable Integer id) {
         return new ApiResponse<>(
@@ -180,6 +185,64 @@ public class HoaDonController {
                 200,
                 "Lấy danh sách voucher khả dụng thành công",
                 service.getVoucherKhaDung(id, page, size)
+        );
+    }
+    @GetMapping("/{id}/giao-hang")
+    public ApiResponse<VanDonGhnResponse> getGiaoHang(
+            @PathVariable Integer id) {
+        return new ApiResponse<>(
+                200,
+                "Lấy thông tin giao hàng thành công",
+                vanDonGhnService.getByHoaDon(id)
+        );
+    }
+
+    @PutMapping("/{id}/giao-hang")
+    public ApiResponse<VanDonGhnResponse> thietLapGiaoHang(
+            @PathVariable Integer id,
+            @Valid @RequestBody ThietLapGiaoHangRequest request) {
+        return new ApiResponse<>(
+                200,
+                "Thiết lập giao hàng thành công",
+                vanDonGhnService.thietLapGiaoHang(id, request)
+        );
+    }
+
+    @DeleteMapping("/{id}/giao-hang")
+    public ApiResponse<Void> boGiaoHang(@PathVariable Integer id) {
+        vanDonGhnService.boGiaoHang(id);
+        return new ApiResponse<>(
+                200,
+                "Đã chuyển hóa đơn sang nhận tại quầy",
+                null
+        );
+    }
+    @PostMapping("/{id}/giao-hang/tao-don-ghn")
+    public ApiResponse<VanDonGhnResponse> taoDonGhn(
+            @PathVariable Integer id) {
+        return new ApiResponse<>(
+                200,
+                "Tạo đơn GHN thành công",
+                vanDonGhnService.taoDonGhn(id)
+        );
+    }
+    @GetMapping("/{id}/giao-hang/trang-thai-ghn")
+    public ApiResponse<VanDonGhnResponse> lamMoiTrangThaiGhn(
+            @PathVariable Integer id) {
+        return new ApiResponse<>(
+                200,
+                "Cập nhật trạng thái GHN thành công",
+                vanDonGhnService.lamMoiTrangThaiGhn(id)
+        );
+    }
+
+    @PostMapping("/{id}/giao-hang/huy-don-ghn")
+    public ApiResponse<VanDonGhnResponse> huyDonGhn(
+            @PathVariable Integer id) {
+        return new ApiResponse<>(
+                200,
+                "Hủy đơn GHN thành công",
+                vanDonGhnService.huyDonGhn(id)
         );
     }
 }
