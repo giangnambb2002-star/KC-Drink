@@ -1,5 +1,6 @@
 package com.example.datn.hoa_don.entity;
 
+import com.example.datn.khuyen_mai.entity.KhuyenMai;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,8 +31,23 @@ public class HoaDonChiTiet {
     @Column(name = "so_luong")
     private Integer soLuong;
 
+    @Column(name = "gia_goc", precision = 18, scale = 2)
+    private BigDecimal giaGoc;
+
     @Column(name = "don_gia", precision = 18, scale = 2)
     private BigDecimal donGia;
+
+    @Column(
+            name = "tien_giam_khuyen_mai",
+            precision = 18,
+            scale = 2,
+            nullable = false
+    )
+    private BigDecimal tienGiamKhuyenMai = BigDecimal.ZERO;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_km")
+    private KhuyenMai khuyenMai;
 
     @Column(name = "thanh_tien", precision = 18, scale = 2)
     private BigDecimal thanhTien;
@@ -48,8 +64,28 @@ public class HoaDonChiTiet {
     @PrePersist
     @PreUpdate
     public void calculateThanhTien() {
+        if (giaGoc == null) {
+            giaGoc = donGia;
+        }
+
         if (donGia != null && soLuong != null) {
-            thanhTien = donGia.multiply(BigDecimal.valueOf(soLuong));
+            thanhTien = donGia.multiply(
+                    BigDecimal.valueOf(soLuong)
+            );
+        }
+
+        if (giaGoc != null
+                && donGia != null
+                && soLuong != null) {
+            BigDecimal giamMoiDonVi = giaGoc
+                    .subtract(donGia)
+                    .max(BigDecimal.ZERO);
+
+            tienGiamKhuyenMai = giamMoiDonVi.multiply(
+                    BigDecimal.valueOf(soLuong)
+            );
+        } else if (tienGiamKhuyenMai == null) {
+            tienGiamKhuyenMai = BigDecimal.ZERO;
         }
     }
 }

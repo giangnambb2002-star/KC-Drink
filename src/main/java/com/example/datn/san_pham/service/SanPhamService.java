@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.core.io.Resource;
+import com.example.datn.khuyen_mai.dto.KetQuaKhuyenMaiResponse;
+import com.example.datn.khuyen_mai.service.KhuyenMaiService;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +26,7 @@ public class SanPhamService {
 
     private final SanPhamRepository repository;
     private final SanPhamImageStorageService imageStorageService;
+    private final KhuyenMaiService khuyenMaiService;
 
 
 
@@ -143,15 +146,47 @@ public class SanPhamService {
         return toResponse(sanPham);
     }
 
-    private SanPhamResponse toResponse(SanPham sanPham) {
+    private SanPhamResponse toResponse(
+            SanPham sanPham
+    ) {
+        KetQuaKhuyenMaiResponse ketQua =
+                khuyenMaiService.tinhKhuyenMaiChoSanPham(
+                        sanPham.getIdSanPham()
+                );
+
         SanPhamResponse response = new SanPhamResponse();
-        response.setIdSanPham(sanPham.getIdSanPham());
-        response.setTenSanPham(sanPham.getTenSanPham());
+
+        response.setIdSanPham(
+                sanPham.getIdSanPham()
+        );
+        response.setTenSanPham(
+                sanPham.getTenSanPham()
+        );
+
+        // Luôn giữ giá gốc trong trường gia
         response.setGia(sanPham.getGia());
+
         response.setMoTa(sanPham.getMoTa());
         response.setHinhAnh(sanPham.getHinhAnh());
         response.setTrangThai(sanPham.getTrangThai());
         response.setIdDanhMuc(sanPham.getIdDanhMuc());
+
+        response.setIdKm(ketQua.getIdKm());
+        response.setTenKhuyenMai(
+                ketQua.getTenKm()
+        );
+        response.setTienGiamKhuyenMai(
+                ketQua.getTienGiam()
+        );
+        response.setGiaSauKhuyenMai(
+                ketQua.getGiaSauKhuyenMai()
+        );
+        response.setCoKhuyenMai(
+                ketQua.getIdKm() != null
+                        && ketQua.getTienGiam()
+                        .compareTo(java.math.BigDecimal.ZERO) > 0
+        );
+
         return response;
     }
     @Transactional

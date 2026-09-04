@@ -1,5 +1,4 @@
 package com.example.datn.hoa_don.service;
-
 import com.example.datn.ban_thanh_pham.entity.CongThucSanPhamBtp;
 import com.example.datn.ban_thanh_pham.repository.CongThucSanPhamBtpRepository;
 import com.example.datn.ban_thanh_pham.service.BanThanhPhamKhoService;
@@ -47,6 +46,9 @@ import com.example.datn.van_chuyen.entity.VanDonGhn;
 import com.example.datn.van_chuyen.repository.VanDonGhnRepository;
 import com.example.datn.van_chuyen.service.VanDonGhnService;
 import com.example.datn.voucher.entity.Voucher;
+import com.example.datn.khuyen_mai.dto.KetQuaKhuyenMaiResponse;
+import com.example.datn.khuyen_mai.repository.KhuyenMaiRepository;
+import com.example.datn.khuyen_mai.service.KhuyenMaiService;
 import com.example.datn.voucher.repository.VoucherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -56,7 +58,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -68,7 +69,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class HoaDonService {
@@ -91,10 +91,19 @@ public class HoaDonService {
     private final PayOSService payOSService;
     private final VanDonGhnService vanDonGhnService;
     private final VanDonGhnRepository vanDonGhnRepository;
+    private final KhuyenMaiService khuyenMaiService;
+    private final KhuyenMaiRepository khuyenMaiRepository;
 
+
+    @Transactional(readOnly = true)
     public HoaDonResponse getById(Integer id) {
         HoaDon hoaDon = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Không tìm thấy hóa đơn"
+                        )
+                );
+
         return toResponse(hoaDon);
     }
     @Transactional
@@ -122,119 +131,247 @@ public class HoaDonService {
         return toResponse(repository.save(hoaDon));
     }
     @Transactional
-    public HoaDonResponse themMon(Integer idHoaDon, ThemMonRequest request) {
-        HoaDon hoaDon = getHoaDonChoThanhToanDeSua(idHoaDon);
+    public HoaDonResponse themMon(
+            Integer idHoaDon,
+            ThemMonRequest request
+    ) {
+        HoaDon hoaDon =
+                getHoaDonChoThanhToanDeSua(idHoaDon);
+        tinhLaiTongTien(hoaDon);
         if (request.getIdSanPham() == null) {
-            throw new RuntimeException("Sản phẩm không được để trống");
+            throw new RuntimeException(
+                    "Sản phẩm không được để trống"
+            );
         }
+
         if (request.getIdSize() == null) {
-            throw new RuntimeException("Size không được để trống");
+            throw new RuntimeException(
+                    "Size không được để trống"
+            );
         }
-        if (request.getSoLuong() == null || request.getSoLuong() <= 0) {
-            throw new RuntimeException("Số lượng phải lớn hơn 0");
+
+        if (request.getSoLuong() == null
+                || request.getSoLuong() <= 0) {
+            throw new RuntimeException(
+                    "Số lượng phải lớn hơn 0"
+            );
         }
+
         if (request.getMucDuong() != null
                 && request.getMucDuong() != 0
                 && request.getMucDuong() != 30
                 && request.getMucDuong() != 50
                 && request.getMucDuong() != 70
                 && request.getMucDuong() != 100) {
-            throw new RuntimeException("Mức đường không hợp lệ");
+            throw new RuntimeException(
+                    "Mức đường không hợp lệ"
+            );
         }
+
         if (request.getMucDa() != null
                 && request.getMucDa() != 0
                 && request.getMucDa() != 50
                 && request.getMucDa() != 100) {
-            throw new RuntimeException("Mức đá không hợp lệ");
+            throw new RuntimeException(
+                    "Mức đá không hợp lệ"
+            );
         }
-        SanPham sanPham = sanPhamRepository.findById(request.getIdSanPham())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
-        if (sanPham.getTrangThai() == null || sanPham.getTrangThai() != 1) {
-            throw new RuntimeException("Sản phẩm đang ngừng bán");
+
+        SanPham sanPham = sanPhamRepository
+                .findById(request.getIdSanPham())
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Không tìm thấy sản phẩm"
+                        )
+                );
+
+        if (sanPham.getTrangThai() == null
+                || sanPham.getTrangThai() != 1) {
+            throw new RuntimeException(
+                    "Sản phẩm đang ngừng bán"
+            );
         }
+
         SanPhamSize sanPhamSize = sanPhamSizeRepository
                 .findByIdSanPhamAndSize_IdSize(
                         request.getIdSanPham(),
                         request.getIdSize()
                 )
                 .orElseThrow(() ->
-                        new RuntimeException("Sản phẩm không hỗ trợ size này"));
-        BigDecimal giaGoc = sanPham.getGia() == null
-                ? BigDecimal.ZERO
-                : sanPham.getGia();
-        BigDecimal phuThu = sanPhamSize.getPhuThu() == null
-                ? BigDecimal.ZERO
-                : sanPhamSize.getPhuThu();
-        BigDecimal donGia = giaGoc.add(phuThu);
+                        new RuntimeException(
+                                "Sản phẩm không hỗ trợ size này"
+                        )
+                );
+
+        BigDecimal phuThu =
+                sanPhamSize.getPhuThu() == null
+                        ? BigDecimal.ZERO
+                        : sanPhamSize.getPhuThu();
+
+        KetQuaKhuyenMaiResponse ketQuaKhuyenMai =
+                khuyenMaiService.tinhKhuyenMaiChoSanPham(
+                        request.getIdSanPham()
+                );
+
+        BigDecimal donGia = ketQuaKhuyenMai
+                .getGiaSauKhuyenMai()
+                .add(phuThu);
+
         int mucDuong = request.getMucDuong() != null
                 ? request.getMucDuong()
                 : 100;
+
         int mucDa = request.getMucDa() != null
                 ? request.getMucDa()
                 : 100;
+
         String ghiChu = request.getGhiChu() != null
                 && !request.getGhiChu().trim().isEmpty()
                 ? request.getGhiChu().trim()
                 : null;
-        HoaDonChiTiet chiTiet = chiTietRepository.findMonTrung(
-                idHoaDon,
-                request.getIdSanPham(),
-                request.getIdSize(),
-                mucDuong,
-                mucDa,
-                ghiChu,
-                donGia
-        ).orElse(null);
-        if (chiTiet != null
-                && chiTiet.getDonGia() != null
-                && chiTiet.getDonGia().compareTo(donGia) != 0) {
-            chiTiet = null;
-        }
+
+        HoaDonChiTiet chiTiet =
+                chiTietRepository.findMonTrung(
+                        idHoaDon,
+                        request.getIdSanPham(),
+                        request.getIdSize(),
+                        mucDuong,
+                        mucDa,
+                        ghiChu,
+                        ketQuaKhuyenMai.getIdKm(),
+                        donGia
+                ).orElse(null);
+
+        int soLuongMoi;
+
         if (chiTiet != null) {
-            int soLuongMoi = chiTiet.getSoLuong() + request.getSoLuong();
-            chiTiet.setSoLuong(soLuongMoi);
-            chiTiet.setThanhTien(
-                    chiTiet.getDonGia()
-                            .multiply(BigDecimal.valueOf(soLuongMoi))
-            );
+            soLuongMoi = chiTiet.getSoLuong()
+                    + request.getSoLuong();
         } else {
+            soLuongMoi = request.getSoLuong();
+
             chiTiet = new HoaDonChiTiet();
             chiTiet.setHoaDon(hoaDon);
-            chiTiet.setIdSanPham(request.getIdSanPham());
+            chiTiet.setIdSanPham(
+                    request.getIdSanPham()
+            );
             chiTiet.setIdSize(request.getIdSize());
             chiTiet.setMucDuong(mucDuong);
             chiTiet.setMucDa(mucDa);
             chiTiet.setGhiChu(ghiChu);
-            chiTiet.setSoLuong(request.getSoLuong());
-            chiTiet.setDonGia(donGia);
-            chiTiet.setThanhTien(
-                    donGia.multiply(BigDecimal.valueOf(request.getSoLuong()))
+        }
+
+        ganGiaKhuyenMaiChoChiTiet(
+                chiTiet,
+                ketQuaKhuyenMai,
+                phuThu,
+                soLuongMoi
+        );
+
+        chiTietRepository.save(chiTiet);
+
+        tinhLaiTongTien(hoaDon);
+
+        return toResponse(hoaDon);
+    }
+    private void ganGiaKhuyenMaiChoChiTiet(
+            HoaDonChiTiet chiTiet,
+            KetQuaKhuyenMaiResponse ketQua,
+            BigDecimal phuThu,
+            int soLuong
+    ) {
+        BigDecimal phuThuAnToan = phuThu == null
+                ? BigDecimal.ZERO
+                : phuThu;
+        BigDecimal giaGocDonVi = ketQua
+                .getGiaGoc()
+                .add(phuThuAnToan);
+        BigDecimal donGiaSauKhuyenMai = ketQua
+                .getGiaSauKhuyenMai()
+                .add(phuThuAnToan);
+        BigDecimal tongTienGiam = ketQua
+                .getTienGiam()
+                .multiply(BigDecimal.valueOf(soLuong));
+        chiTiet.setSoLuong(soLuong);
+        chiTiet.setGiaGoc(giaGocDonVi);
+        chiTiet.setDonGia(donGiaSauKhuyenMai);
+        chiTiet.setTienGiamKhuyenMai(tongTienGiam);
+        chiTiet.setThanhTien(
+                donGiaSauKhuyenMai.multiply(
+                        BigDecimal.valueOf(soLuong)
+                )
+        );
+        if (ketQua.getIdKm() == null) {
+            chiTiet.setKhuyenMai(null);
+        } else {
+            chiTiet.setKhuyenMai(
+                    khuyenMaiRepository.getReferenceById(
+                            ketQua.getIdKm()
+                    )
             );
         }
-        chiTietRepository.save(chiTiet);
-        tinhLaiTongTien(hoaDon);
-        return toResponse(hoaDon);
+    }private void lamMoiKhuyenMaiChoChiTiet(
+            HoaDonChiTiet chiTiet
+    ) {
+        SanPhamSize sanPhamSize = sanPhamSizeRepository
+                .findByIdSanPhamAndSize_IdSize(
+                        chiTiet.getIdSanPham(),
+                        chiTiet.getIdSize()
+                )
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Sản phẩm không còn hỗ trợ size này"
+                        )
+                );
+
+        BigDecimal phuThu =
+                sanPhamSize.getPhuThu() == null
+                        ? BigDecimal.ZERO
+                        : sanPhamSize.getPhuThu();
+
+        KetQuaKhuyenMaiResponse ketQua =
+                khuyenMaiService.tinhKhuyenMaiChoSanPham(
+                        chiTiet.getIdSanPham()
+                );
+
+        ganGiaKhuyenMaiChoChiTiet(
+                chiTiet,
+                ketQua,
+                phuThu,
+                chiTiet.getSoLuong()
+        );
     }
     @Transactional
     public HoaDonResponse capNhatSoLuong(
             Integer idChiTiet,
             CapNhatSoLuongRequest request
     ) {
-        HoaDonChiTiet chiTiet = chiTietRepository.findById(idChiTiet)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết hóa đơn"));
+        HoaDonChiTiet chiTiet =
+                chiTietRepository.findById(idChiTiet)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Không tìm thấy chi tiết hóa đơn"
+                                )
+                        );
+
         HoaDon hoaDon = getHoaDonChoThanhToanDeSua(
                 chiTiet.getHoaDon().getIdHoaDon()
         );
-        if (request.getSoLuong() == null || request.getSoLuong() <= 0) {
-            throw new RuntimeException("Số lượng phải lớn hơn 0");
+
+        if (request.getSoLuong() == null
+                || request.getSoLuong() <= 0) {
+            throw new RuntimeException(
+                    "Số lượng phải lớn hơn 0"
+            );
         }
+
         chiTiet.setSoLuong(request.getSoLuong());
-        chiTiet.setThanhTien(
-                chiTiet.getDonGia()
-                        .multiply(BigDecimal.valueOf(request.getSoLuong()))
-        );
+        lamMoiKhuyenMaiChoChiTiet(chiTiet);
+
         chiTietRepository.save(chiTiet);
+
         tinhLaiTongTien(hoaDon);
+
         return toResponse(hoaDon);
     }
     @Transactional
@@ -281,41 +418,92 @@ public class HoaDonService {
         return hoaDon;
     }
     private void tinhLaiTongTien(HoaDon hoaDon) {
-        List<HoaDonChiTiet> chiTietList = chiTietRepository.findByHoaDon_IdHoaDon(hoaDon.getIdHoaDon());
+        List<HoaDonChiTiet> chiTietList =
+                chiTietRepository.findByHoaDon_IdHoaDon(
+                        hoaDon.getIdHoaDon()
+                );
+
         BigDecimal tongTien = BigDecimal.ZERO;
+
         for (HoaDonChiTiet chiTiet : chiTietList) {
-            if (chiTiet.getThanhTien() != null) tongTien = tongTien.add(chiTiet.getThanhTien());
+            // Chỉ được gọi với hóa đơn đang chờ thanh toán.
+            // Vì vậy có thể làm mới CTKM hiện tại.
+            lamMoiKhuyenMaiChoChiTiet(chiTiet);
+            chiTietRepository.save(chiTiet);
+
+            if (chiTiet.getThanhTien() != null) {
+                tongTien = tongTien.add(
+                        chiTiet.getThanhTien()
+                );
+            }
+
             List<HdctTopping> toppingList =
-                    hdctToppingRepository.findByHoaDonChiTiet_IdHoaDonChiTiet(chiTiet.getIdHoaDonChiTiet());
+                    hdctToppingRepository
+                            .findByHoaDonChiTiet_IdHoaDonChiTiet(
+                                    chiTiet.getIdHoaDonChiTiet()
+                            );
+
             BigDecimal tienTopping = toppingList.stream()
                     .map(HdctTopping::getThanhTien)
-                    .filter(value -> value != null)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .filter(Objects::nonNull)
+                    .reduce(
+                            BigDecimal.ZERO,
+                            BigDecimal::add
+                    );
+
             tongTien = tongTien.add(tienTopping);
         }
-        tongTien = tongTien.setScale(0, RoundingMode.HALF_UP);
+
+        tongTien = tongTien.setScale(
+                0,
+                RoundingMode.HALF_UP
+        );
+
         hoaDon.setTongTien(tongTien);
+
         BigDecimal giamGia = BigDecimal.ZERO;
         Voucher voucher = hoaDon.getVoucher();
+
         if (voucher != null) {
-            if (voucher.getIdKhachHang() != null && (hoaDon.getKhachHang() == null || !voucher.getIdKhachHang().equals(hoaDon.getKhachHang().getIdKhachHang()))) {
+            if (voucher.getIdKhachHang() != null
+                    && (
+                    hoaDon.getKhachHang() == null
+                            || !voucher.getIdKhachHang().equals(
+                            hoaDon.getKhachHang()
+                                    .getIdKhachHang()
+                    )
+            )) {
                 hoaDon.setVoucher(null);
-            } else if (tongTien.compareTo(BigDecimal.ZERO) <= 0) {
+            } else if (tongTien.compareTo(
+                    BigDecimal.ZERO
+            ) <= 0) {
                 hoaDon.setVoucher(null);
-            } else if (voucher.getDieuKien() != null && tongTien.compareTo(voucher.getDieuKien()) < 0) {
+            } else if (voucher.getDieuKien() != null
+                    && tongTien.compareTo(
+                    voucher.getDieuKien()
+            ) < 0) {
                 hoaDon.setVoucher(null);
             } else {
-                giamGia = tinhTienGiamVoucher(voucher, tongTien);
+                giamGia = tinhTienGiamVoucher(
+                        voucher,
+                        tongTien
+                );
             }
         }
+
         hoaDon.setGiamGia(giamGia);
-        BigDecimal phiVanChuyen = hoaDon.getPhiVanChuyen() == null
-                ? BigDecimal.ZERO : hoaDon.getPhiVanChuyen();
+
+        BigDecimal phiVanChuyen =
+                hoaDon.getPhiVanChuyen() == null
+                        ? BigDecimal.ZERO
+                        : hoaDon.getPhiVanChuyen();
+
         BigDecimal thanhTien = tongTien
                 .subtract(giamGia)
                 .add(phiVanChuyen)
                 .max(BigDecimal.ZERO)
                 .setScale(0, RoundingMode.HALF_UP);
+
         hoaDon.setThanhTien(thanhTien);
         repository.save(hoaDon);
     }
@@ -334,7 +522,6 @@ public class HoaDonService {
         }
         return giamGia.min(tongTien).setScale(0, RoundingMode.HALF_UP);
     }
-
     private HoaDonResponse toResponse(HoaDon hoaDon) {
         HoaDonResponse response = new HoaDonResponse();
         response.setIdHoaDon(hoaDon.getIdHoaDon());
@@ -381,8 +568,21 @@ public class HoaDonService {
                         .map(this::toChiTietResponse)
                         .toList();
         response.setChiTiet(chiTiet);
+        BigDecimal tongGiamKhuyenMai = chiTiet.stream()
+                .map(HoaDonChiTietResponse::getTienGiamKhuyenMai)
+                .filter(Objects::nonNull)
+                .reduce(
+                        BigDecimal.ZERO,
+                        BigDecimal::add
+                )
+                .setScale(0, RoundingMode.HALF_UP);
+
+        response.setGiamGiaKhuyenMai(
+                tongGiamKhuyenMai
+        );
         return response;
     }
+
     private HoaDonChiTietResponse toChiTietResponse(HoaDonChiTiet chiTiet) {
         HoaDonChiTietResponse response = new HoaDonChiTietResponse();
         response.setIdHoaDonChiTiet(chiTiet.getIdHoaDonChiTiet());
@@ -402,6 +602,25 @@ public class HoaDonService {
         response.setMucDa(chiTiet.getMucDa());
         response.setGhiChu(chiTiet.getGhiChu());
         response.setSoLuong(chiTiet.getSoLuong());
+        response.setGiaGoc(
+                chiTiet.getGiaGoc() == null
+                        ? chiTiet.getDonGia()
+                        : chiTiet.getGiaGoc()
+        );
+        response.setTienGiamKhuyenMai(
+                chiTiet.getTienGiamKhuyenMai() == null
+                        ? BigDecimal.ZERO
+                        : chiTiet.getTienGiamKhuyenMai()
+        );
+
+        if (chiTiet.getKhuyenMai() != null) {
+            response.setIdKm(
+                    chiTiet.getKhuyenMai().getIdKm()
+            );
+            response.setTenKhuyenMai(
+                    chiTiet.getKhuyenMai().getTenKm()
+            );
+        }
         response.setDonGia(chiTiet.getDonGia());
         response.setThanhTien(chiTiet.getThanhTien());
         List<HdctToppingResponse> toppingList =
@@ -450,6 +669,11 @@ public class HoaDonService {
                 && payOSDangKhoaHoaDon(hoaDon)) {
             throw new RuntimeException(
                     "Hóa đơn đang có giao dịch PayOS chưa kết thúc, không thể thanh toán tiền mặt");}
+        if ("TIEN_MAT".equals(hinhThucThanhToan)) {
+            tinhLaiTongTien(hoaDon);
+            chiTietList = chiTietRepository
+                    .findByHoaDon_IdHoaDon(idHoaDon);
+        }
         Voucher voucher = hoaDon.getVoucher();
         if (voucher != null) {
             LocalDateTime now = LocalDateTime.now();
@@ -925,6 +1149,9 @@ public class HoaDonService {
         if (chiTietList.isEmpty()) {
             throw new RuntimeException("Hóa đơn chưa có sản phẩm");
         }
+        tinhLaiTongTien(hoaDon);
+        chiTietList = chiTietRepository
+                .findByHoaDon_IdHoaDon(idHoaDon);
         if (hoaDon.getThanhTien() == null
                 || hoaDon.getThanhTien().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Số tiền thanh toán không hợp lệ");
@@ -1013,14 +1240,12 @@ public class HoaDonService {
                 && !"CANCELLED".equalsIgnoreCase(status)
                 && !"EXPIRED".equalsIgnoreCase(status);
     }
-
     private HoaDonListResponse toListResponse(
             HoaDon hoaDon,
             VanDonGhn vanDon
     ) {
         KhachHang khachHang = hoaDon.getKhachHang();
         NhanVien nhanVien = hoaDon.getNhanVien();
-
         return HoaDonListResponse.builder()
                 .idHoaDon(hoaDon.getIdHoaDon())
                 .maHoaDon(hoaDon.getMaHoaDon())
@@ -1045,7 +1270,6 @@ public class HoaDonService {
                 .thoiGianGiaoDuKien(vanDon == null ? null : vanDon.getThoiGianGiaoDuKien())
                 .build();
     }
-
     @Transactional(readOnly = true)
     public PageResponse<HoaDonListResponse> getDanhSachHoaDon(
             String keyword,
@@ -1063,7 +1287,6 @@ public class HoaDonService {
     ) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
-
         Set<String> allowedSortFields = Set.of(
                 "idHoaDon",
                 "maHoaDon",
@@ -1076,34 +1299,27 @@ public class HoaDonService {
                 "trangThai",
                 "hinhThucThanhToan"
         );
-
         String safeSortBy = allowedSortFields.contains(sortBy)
                 ? sortBy
                 : "ngayTao";
-
         Sort.Direction sortDirection =
                 "asc".equalsIgnoreCase(direction)
                         ? Sort.Direction.ASC
                         : Sort.Direction.DESC;
-
         Pageable pageable = PageRequest.of(
                 safePage,
                 safeSize,
                 Sort.by(sortDirection, safeSortBy)
         );
-
         String normalizedKeyword = keyword == null
                 ? null
                 : keyword.trim();
-
         LocalDateTime tuNgayTime = tuNgay == null
                 ? null
                 : tuNgay.atStartOfDay();
-
         LocalDateTime denNgayExclusive = denNgay == null
                 ? null
                 : denNgay.plusDays(1).atStartOfDay();
-
         Page<HoaDon> hoaDonPage = repository.searchHoaDon(
                 normalizedKeyword,
                 trangThai,
@@ -1115,14 +1331,11 @@ public class HoaDonService {
                 denNgayExclusive,
                 pageable
         );
-
         List<Integer> idHoaDonList = hoaDonPage.getContent()
                 .stream()
                 .map(HoaDon::getIdHoaDon)
                 .toList();
-
         Map<Integer, VanDonGhn> vanDonMap;
-
         if (idHoaDonList.isEmpty()) {
             vanDonMap = Map.of();
         } else {
@@ -1135,7 +1348,6 @@ public class HoaDonService {
                             (oldValue, newValue) -> oldValue
                     ));
         }
-
         List<HoaDonListResponse> content = hoaDonPage
                 .getContent()
                 .stream()
@@ -1144,7 +1356,6 @@ public class HoaDonService {
                         vanDonMap.get(hoaDon.getIdHoaDon())
                 ))
                 .toList();
-
         return new PageResponse<>(
                 content,
                 hoaDonPage.getNumber(),

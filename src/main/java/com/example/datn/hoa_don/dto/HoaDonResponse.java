@@ -11,6 +11,7 @@ public class HoaDonResponse {
     private LocalDateTime ngayTao;
     private BigDecimal tongTien;
     private BigDecimal giamGia;
+    private BigDecimal giamGiaKhuyenMai;
     private BigDecimal phiVanChuyen;
     private BigDecimal thanhTien;
     private String hinhThucThanhToan;

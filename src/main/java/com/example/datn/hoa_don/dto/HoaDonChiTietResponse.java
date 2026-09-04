@@ -13,6 +13,10 @@ public class HoaDonChiTietResponse {
     private Integer idSize;
     private String tenSize;
     private Integer soLuong;
+    private BigDecimal giaGoc;
+    private BigDecimal tienGiamKhuyenMai;
+    private Integer idKm;
+    private String tenKhuyenMai;
     private BigDecimal donGia;
     private BigDecimal thanhTien;
     private Integer mucDuong;
