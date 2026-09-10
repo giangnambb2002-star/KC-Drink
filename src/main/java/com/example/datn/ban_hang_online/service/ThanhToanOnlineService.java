@@ -154,14 +154,16 @@ public class ThanhToanOnlineService {
             if ("CANCELLED".equalsIgnoreCase(status)
                     || "EXPIRED".equalsIgnoreCase(status)) {
 
+                dongLanThanhToanDaLock(
+                        hoaDon,
+                        status
+                );
+
+            } else {
                 throw new RuntimeException(
-                        "Đơn hàng đã hết thời gian thanh toán hoặc giao dịch đã bị hủy. "
-                                + "Vui lòng tạo đơn hàng mới."
+                        "Trạng thái PayOS hiện tại không cho phép tạo giao dịch mới"
                 );
             }
-            throw new RuntimeException(
-                    "Trạng thái PayOS hiện tại không cho phép tạo giao dịch mới"
-            );
         }
         /*
          * ==========================================
@@ -173,6 +175,8 @@ public class ThanhToanOnlineService {
          *
          * Chưa trừ kho thật.
          */
+        hoaDon.setMaLyDoCho(null);
+        hoaDon.setLyDoCho(null);
         hoaDonService
                 .kiemTraDieuKienThanhToan(
                         idHoaDon
@@ -319,7 +323,7 @@ public class ThanhToanOnlineService {
         if (!"PAID".equalsIgnoreCase(status)) {
             if ("CANCELLED".equalsIgnoreCase(status)
                     || "EXPIRED".equalsIgnoreCase(status)) {
-                huyDonQuaHanDaLock(
+                dongLanThanhToanDaLock(
                         hoaDon,
                         status
                 );
@@ -445,7 +449,7 @@ public class ThanhToanOnlineService {
         if ("CANCELLED".equalsIgnoreCase(status)
                 || "EXPIRED".equalsIgnoreCase(status)) {
 
-            huyDonQuaHanDaLock(
+            dongLanThanhToanDaLock(
                     hoaDon,
                     status
             );
@@ -476,7 +480,11 @@ public class ThanhToanOnlineService {
                     "PayOS chưa xác nhận hủy giao dịch"
             );
         }
-        huyDonQuaHanDaLock(
+        hoaDon.setMaLyDoCho("KHACH_HANG_HUY_THANH_TOAN");
+        hoaDon.setLyDoCho(
+                "Bạn đã hủy lần thanh toán này. Có thể tạo mã QR mới."
+        );
+        dongLanThanhToanDaLock(
                 hoaDon,
                 cancelled.getStatus()
         );
@@ -568,41 +576,50 @@ public class ThanhToanOnlineService {
                 status
         );
     }
-    private void huyDonQuaHanDaLock(
+    private void dongLanThanhToanDaLock(
             HoaDon hoaDon,
             String payosStatus
     ) {
-        Integer idHoaDon =
-                hoaDon.getIdHoaDon();
+        Integer idHoaDon = hoaDon.getIdHoaDon();
+
         if (payosStatus != null) {
-            hoaDon.setPayosStatus(
-                    payosStatus
-            );
+            hoaDon.setPayosStatus(payosStatus);
         }
-        datChoKhoService.giaiPhongDatCho(
-                idHoaDon
-        );
-        hoaDon.setTrangThai(
-                "DA_HUY"
-        );
-        hoaDonRepository.save(
-                hoaDon
-        );
-        vanDonGhnRepository
-                .findByHoaDon_IdHoaDon(
-                        idHoaDon
-                )
-                .ifPresent(vanDon -> {
-                    vanDon.setTrangThai(
-                            "DA_HUY"
-                    );
-                    vanDonGhnRepository.save(
-                            vanDon
-                    );
-                });
+
+        datChoKhoService.giaiPhongDatCho(idHoaDon);
+
+        /*
+         * Chỉ đóng lần thanh toán hiện tại.
+         * Không hủy toàn bộ đơn hàng.
+         */
+        hoaDon.setTrangThai("CHO_THANH_TOAN");
+        hoaDon.setPayosPaymentLinkId(null);
+        hoaDon.setPayosCheckoutUrl(null);
+        hoaDon.setPayosQrCode(null);
+        hoaDon.setPayosExpiresAt(null);
+
+        /*
+         * Giữ nguyên lý do POS nếu đã được gán trước đó.
+         */
+        if (hoaDon.getMaLyDoCho() == null
+                || hoaDon.getMaLyDoCho().isBlank()) {
+
+            if ("EXPIRED".equalsIgnoreCase(payosStatus)) {
+                hoaDon.setMaLyDoCho("HET_HAN_THANH_TOAN");
+                hoaDon.setLyDoCho(
+                        "Mã QR đã hết hạn. Vui lòng tạo mã thanh toán mới."
+                );
+            } else {
+                hoaDon.setMaLyDoCho("PAYOS_DA_HUY");
+                hoaDon.setLyDoCho(
+                        "Mã QR không còn hiệu lực. Vui lòng tạo mã thanh toán mới."
+                );
+            }
+        }
+
+        hoaDonRepository.save(hoaDon);
     }
-    @Transactional
-    public void xuLyDonQuaHan(
+    @Transactional public void xuLyDonQuaHan(
             Integer idHoaDon
     ) {
         HoaDon hoaDon =
@@ -640,7 +657,11 @@ public class ThanhToanOnlineService {
          * Không có PayOS thì không thể thanh toán nữa.
          */
         if (hoaDon.getPayosOrderCode() == null) {
-            huyDonQuaHanDaLock(
+            hoaDon.setMaLyDoCho("HET_HAN_THANH_TOAN");
+            hoaDon.setLyDoCho(
+                    "Mã QR đã hết hạn. Vui lòng tạo mã thanh toán mới."
+            );
+            dongLanThanhToanDaLock(
                     hoaDon,
                     hoaDon.getPayosStatus()
             );
@@ -702,26 +723,27 @@ public class ThanhToanOnlineService {
                     && !"EXPIRED".equalsIgnoreCase(
                     cancelled.getStatus()
             )) {
-
                 throw new RuntimeException(
                         "PayOS chưa xác nhận đóng giao dịch quá hạn"
                 );
             }
-            status =
-                    cancelled.getStatus();
+
+            status = cancelled.getStatus();
         }
         if ("CANCELLED".equalsIgnoreCase(status)
                 || "EXPIRED".equalsIgnoreCase(status)) {
-            huyDonQuaHanDaLock(
+
+            hoaDon.setMaLyDoCho("HET_HAN_THANH_TOAN");
+            hoaDon.setLyDoCho(
+                    "Mã QR đã hết hạn. Vui lòng tạo mã thanh toán mới."
+            );
+
+            dongLanThanhToanDaLock(
                     hoaDon,
                     status
             );
             return;
         }
-        throw new RuntimeException(
-                "Trạng thái PayOS không hợp lệ khi xử lý đơn quá hạn: "
-                        + status
-        );
     }
     private TrangThaiThanhToanOnlineResponse
     toResponse(
