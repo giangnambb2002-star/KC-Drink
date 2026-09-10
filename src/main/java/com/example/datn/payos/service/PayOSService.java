@@ -11,16 +11,44 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class PayOSService {
     private final PayOS payOS;
-    private static final long QR_EXPIRATION_SECONDS = 10 * 60;
-    public PayOSCreateResponse createPayment(PayOSCreateRequest request) {
-        return createPayment(request.getAmount(), request.getDescription());
+    public static final long QR_EXPIRATION_SECONDS = 10 * 60;
+
+    public PayOSCreateResponse createPayment(
+            PayOSCreateRequest request
+    ) {
+        return createPayment(
+                request.getAmount(),
+                request.getDescription()
+        );
     }
-    public PayOSCreateResponse createPayment(Long amount, String description) {
+
+    public PayOSCreateResponse createPayment(
+            Long amount,
+            String description
+    ) {
+        return createPayment(
+                amount,
+                description,
+                Instant.now()
+                        .plusSeconds(QR_EXPIRATION_SECONDS)
+                        .getEpochSecond()
+        );
+    }
+
+    public PayOSCreateResponse createPayment(
+            Long amount,
+            String description,
+            long expiredAtEpochSecond
+    ) {
         try {
             if (amount == null || amount <= 0) {
-                throw new RuntimeException("Số tiền thanh toán không hợp lệ");
+                throw new RuntimeException(
+                        "Số tiền thanh toán không hợp lệ"
+                );
             }
+
             long orderCode = System.currentTimeMillis();
+
             CreatePaymentLinkRequest paymentRequest =
                     CreatePaymentLinkRequest.builder()
                             .orderCode(orderCode)
@@ -28,13 +56,13 @@ public class PayOSService {
                             .description(description)
                             .cancelUrl("http://localhost:5173/payos/cancel")
                             .returnUrl("http://localhost:5173/payos/success")
-                            .expiredAt(
-                                    Instant.now()
-                                            .plusSeconds(QR_EXPIRATION_SECONDS)
-                                            .getEpochSecond()
-                            )
+                            .expiredAt(expiredAtEpochSecond)
                             .build();
-            var paymentLink = payOS.paymentRequests().create(paymentRequest);
+
+            var paymentLink =
+                    payOS.paymentRequests()
+                            .create(paymentRequest);
+
             return new PayOSCreateResponse(
                     orderCode,
                     amount,
@@ -44,9 +72,11 @@ public class PayOSService {
                     paymentLink.getPaymentLinkId(),
                     paymentLink.getStatus().toString()
             );
+
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Không thể tạo link thanh toán PayOS: " + e.getMessage()
+                    "Không thể tạo link thanh toán PayOS: "
+                            + e.getMessage()
             );
         }
     }

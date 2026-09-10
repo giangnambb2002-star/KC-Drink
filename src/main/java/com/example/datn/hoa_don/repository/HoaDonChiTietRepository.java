@@ -8,6 +8,10 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import com.example.datn.dashboard.dto.DashboardSanPhamBanChayResponse;
+import org.springframework.data.domain.Pageable;
+import java.time.LocalDateTime;
+
 
 public interface HoaDonChiTietRepository
         extends JpaRepository<HoaDonChiTiet, Integer> {
@@ -46,5 +50,25 @@ public interface HoaDonChiTietRepository
             @Param("ghiChu") String ghiChu,
             @Param("idKm") Integer idKm,
             @Param("donGia") BigDecimal donGia
+    );
+    @Query("""
+        SELECT new com.example.datn.dashboard.dto.DashboardSanPhamBanChayResponse(
+            c.idSanPham,
+            sp.tenSanPham,
+            SUM(c.soLuong),
+            SUM(c.thanhTien)
+        )
+        FROM HoaDonChiTiet c, SanPham sp
+        WHERE sp.idSanPham = c.idSanPham
+          AND c.hoaDon.trangThai = 'DA_THANH_TOAN'
+          AND c.hoaDon.ngayTao >= :tuNgay
+          AND c.hoaDon.ngayTao < :denNgay
+        GROUP BY c.idSanPham, sp.tenSanPham
+        ORDER BY SUM(c.soLuong) DESC, SUM(c.thanhTien) DESC
+        """)
+    List<DashboardSanPhamBanChayResponse> findSanPhamBanChay(
+            @Param("tuNgay") LocalDateTime tuNgay,
+            @Param("denNgay") LocalDateTime denNgay,
+            Pageable pageable
     );
 }

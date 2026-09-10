@@ -1,4 +1,5 @@
 package com.example.datn.van_chuyen.service;
+import com.example.datn.ban_hang_online.service.CodOnlineService;
 import com.example.datn.dia_chi.entity.DiaChiKhachHang;
 import com.example.datn.dia_chi.repository.DiaChiRepository;
 import com.example.datn.hoa_don.entity.HoaDon;
@@ -9,8 +10,10 @@ import com.example.datn.van_chuyen.dto.TinhPhiRequest;
 import com.example.datn.van_chuyen.dto.VanDonGhnResponse;
 import com.example.datn.van_chuyen.entity.VanDonGhn;
 import com.example.datn.van_chuyen.dto.TaoDonGhnRequest;
+import com.example.datn.nhan_vien.entity.NhanVien;
+import com.example.datn.nhan_vien.repository.NhanVienRepository;
+import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.fasterxml.jackson.databind.JsonNode;
-
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -30,6 +33,9 @@ public class VanDonGhnService {
     private final HoaDonRepository hoaDonRepository;
     private final DiaChiRepository diaChiRepository;
     private final GhnService ghnService;
+    private final NhanVienRepository nhanVienRepository;
+    private final CodOnlineService codOnlineService;
+
     @Transactional(readOnly = true)
     public VanDonGhnResponse getByHoaDon(Integer idHoaDon) {
         VanDonGhn vanDon = vanDonRepository.findByHoaDon_IdHoaDon(idHoaDon)
@@ -189,7 +195,6 @@ public class VanDonGhnService {
         }
         return vanDon;
     }
-
     private String chuyenTrangThaiNoiBo(String ghnStatus) {
         return switch (ghnStatus.toLowerCase()) {
             case "ready_to_pick" -> "DA_TAO_DON";
@@ -257,10 +262,26 @@ public class VanDonGhnService {
     public VanDonGhnResponse taoDonGhn(Integer idHoaDon) {
         HoaDon hoaDon = hoaDonRepository.findByIdForUpdate(idHoaDon)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
-        if (!"DA_THANH_TOAN".equals(hoaDon.getTrangThai())) {
-            throw new RuntimeException(
-                    "Chỉ được tạo đơn GHN sau khi hóa đơn đã thanh toán"
-            );
+        boolean laTienMat =
+                "TIEN_MAT".equalsIgnoreCase(
+                        hoaDon.getHinhThucThanhToan()
+                );
+        if (laTienMat) {
+            if (!"CHO_THANH_TOAN".equals(
+                    hoaDon.getTrangThai()
+            )) {
+                throw new RuntimeException(
+                        "Đơn thanh toán tiền mặt không ở trạng thái có thể tạo GHN"
+                );
+            }
+        } else {
+            if (!"DA_THANH_TOAN".equals(
+                    hoaDon.getTrangThai()
+            )) {
+                throw new RuntimeException(
+                        "Chỉ được tạo đơn GHN sau khi hóa đơn đã thanh toán"
+                );
+            }
         }
         VanDonGhn vanDon = vanDonRepository.findByHoaDon_IdHoaDon(idHoaDon)
                 .orElseThrow(() -> new RuntimeException(
@@ -270,8 +291,24 @@ public class VanDonGhnService {
                 && !vanDon.getMaVanDonGhn().isBlank()) {
             return toResponse(vanDon);
         }
-        if (!"CHO_TAO_DON".equals(vanDon.getTrangThai())) {
-            throw new RuntimeException("Vận đơn chưa sẵn sàng để tạo trên GHN");
+        boolean laDonOnline =
+                "ONLINE".equalsIgnoreCase(hoaDon.getLoaiHoaDon());
+
+        if (laDonOnline) {
+
+            if (!"DA_TIEP_NHAN".equals(vanDon.getTrangThai())) {
+                throw new RuntimeException(
+                        "Đơn hàng online phải được nhân viên tiếp nhận trước khi tạo vận đơn GHN"
+                );
+            }
+
+        } else {
+
+            if (!"CHO_TAO_DON".equals(vanDon.getTrangThai())) {
+                throw new RuntimeException(
+                        "Vận đơn chưa sẵn sàng để tạo trên GHN"
+                );
+            }
         }
         TaoDonGhnRequest request = new TaoDonGhnRequest();
         request.setToName(vanDon.getTenNguoiNhan());
@@ -312,15 +349,44 @@ public class VanDonGhnService {
         if (ghnStatus == null || ghnStatus.isBlank()) {
             throw new RuntimeException("GHN không trả về trạng thái vận đơn");
         }
+        List<String> forwardFlow = List.of(
+                "ready_to_pick",
+                "picking",
+                "picked",
+                "transporting",
+                "delivering",
+                "delivered"
+        );
+        String currentStatus = vanDon.getTrangThaiGhn() == null
+                ? ""
+                : vanDon.getTrangThaiGhn().trim().toLowerCase();
+
+        String newStatus = ghnStatus.trim().toLowerCase();
+
+        int currentIndex = forwardFlow.indexOf(currentStatus);
+        int newIndex = forwardFlow.indexOf(newStatus);
+        if (currentIndex >= 0
+                && newIndex >= 0
+                && newIndex < currentIndex) {
+            return toResponse(vanDon);
+        }
         vanDon.setTrangThaiGhn(ghnStatus);
         vanDon.setTrangThai(chuyenTrangThaiNoiBo(ghnStatus));
         String leadtime = ghnData.path("leadtime").asText(null);
         if (leadtime != null && !leadtime.isBlank()) {
             vanDon.setThoiGianGiaoDuKien(parseGhnDateTime(leadtime));
         }
-        return toResponse(vanDonRepository.saveAndFlush(vanDon));
+        VanDonGhn saved =
+                vanDonRepository.saveAndFlush(
+                        vanDon
+                );
+        if ("delivered".equalsIgnoreCase(ghnStatus)) {
+            codOnlineService.xacNhanDaThuTien(
+                    idHoaDon
+            );
+        }
+        return toResponse(saved);
     }
-
     @Transactional
     public VanDonGhnResponse huyDonGhn(Integer idHoaDon) {
         hoaDonRepository.findByIdForUpdate(idHoaDon)
@@ -339,7 +405,6 @@ public class VanDonGhnService {
                     "Đơn GHN đã giao thành công, không thể hủy"
             );
         }
-
         JsonNode cancelData = ghnService.cancelOrder(vanDon.getMaVanDonGhn());
         JsonNode result = cancelData != null
                 && cancelData.isArray()
@@ -351,9 +416,194 @@ public class VanDonGhnService {
                     : result.path("message").asText("GHN không xác nhận hủy đơn");
             throw new RuntimeException(message);
         }
-
         vanDon.setTrangThaiGhn("cancel");
         vanDon.setTrangThai("DA_HUY");
         return toResponse(vanDonRepository.saveAndFlush(vanDon));
+    }
+    @Transactional
+    public VanDonGhnResponse tiepNhanDon(
+            Integer idHoaDon,
+            TaiKhoan taiKhoan
+    ){
+
+        HoaDon hoaDon =
+                hoaDonRepository.findByIdForUpdate(idHoaDon)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Không tìm thấy hóa đơn"
+                                )
+                        );
+
+        if (!"ONLINE".equalsIgnoreCase(hoaDon.getLoaiHoaDon())) {
+            throw new RuntimeException(
+                    "Chức năng tiếp nhận chỉ áp dụng cho đơn hàng online"
+            );
+        }
+        boolean laTienMat =
+                "TIEN_MAT".equalsIgnoreCase(
+                        hoaDon.getHinhThucThanhToan()
+                );
+
+        if (laTienMat) {
+
+            /*
+             * COD: khách chưa thanh toán.
+             * Cho phép nhân viên tiếp nhận khi đơn
+             * vẫn đang chờ thanh toán.
+             */
+            if (!"CHO_THANH_TOAN".equals(
+                    hoaDon.getTrangThai()
+            )) {
+                throw new RuntimeException(
+                        "Đơn thanh toán tiền mặt không ở trạng thái có thể tiếp nhận"
+                );
+            }
+
+        } else {
+            if (!"DA_THANH_TOAN".equals(
+                    hoaDon.getTrangThai()
+            )) {
+                throw new RuntimeException(
+                        "Chỉ được tiếp nhận đơn chuyển khoản đã thanh toán"
+                );
+            }
+        }
+        VanDonGhn vanDon =
+                vanDonRepository.findByHoaDon_IdHoaDon(idHoaDon)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Hóa đơn chưa có thông tin giao hàng"
+                                )
+                        );
+
+
+        if ("DA_TIEP_NHAN".equals(
+                vanDon.getTrangThai()
+        )) {
+            return toResponse(vanDon);
+        }
+
+        /*
+         * Nếu đã tạo GHN rồi thì không quay ngược
+         * về bước tiếp nhận.
+         */
+        if (vanDon.getMaVanDonGhn() != null
+                && !vanDon.getMaVanDonGhn().isBlank()) {
+
+            return toResponse(vanDon);
+        }
+
+        if (!"CHO_TAO_DON".equals(
+                vanDon.getTrangThai()
+        )) {
+            throw new RuntimeException(
+                    "Đơn hàng chưa sẵn sàng để tiếp nhận"
+            );
+        }
+        if (!"ADMIN".equals(taiKhoan.getRole())
+                && !"STAFF".equals(taiKhoan.getRole())) {
+            throw new RuntimeException(
+                    "Chỉ nhân viên mới được tiếp nhận đơn hàng"
+            );
+        }
+        NhanVien nhanVien =
+                nhanVienRepository.findByTaiKhoan(taiKhoan)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Không tìm thấy hồ sơ nhân viên đang đăng nhập"
+                                )
+                        );
+        if ("TIEN_MAT".equalsIgnoreCase(
+                hoaDon.getHinhThucThanhToan()
+        )) {
+            codOnlineService.xuatKhoKhiTiepNhan(
+                    idHoaDon
+            );
+        }
+        hoaDon.setNhanVien(nhanVien);
+        hoaDonRepository.save(hoaDon);
+        vanDon.setTrangThai(
+                "DA_TIEP_NHAN"
+        );
+
+        return toResponse(
+                vanDonRepository.saveAndFlush(vanDon)
+        );
+    }
+    @Transactional
+    public VanDonGhnResponse giaLapTrangThaiGhn(
+            Integer idHoaDon,
+            String trangThaiGhn
+    ) {
+        hoaDonRepository.findByIdForUpdate(idHoaDon)
+                .orElseThrow(() ->
+                        new RuntimeException("Không tìm thấy hóa đơn")
+                );
+
+        VanDonGhn vanDon = getVanDonDaTao(idHoaDon);
+
+        String target = trangThaiGhn == null
+                ? ""
+                : trangThaiGhn.trim().toLowerCase();
+
+        List<String> flow = List.of(
+                "ready_to_pick",
+                "picking",
+                "picked",
+                "transporting",
+                "delivering",
+                "delivered"
+        );
+
+        int targetIndex = flow.indexOf(target);
+
+        // ready_to_pick là trạng thái khởi tạo sau khi tạo GHN thật,
+        // không cho giả lập quay về trạng thái này.
+        if (targetIndex <= 0) {
+            throw new RuntimeException(
+                    "Trạng thái giả lập không hợp lệ"
+            );
+        }
+
+        String current = vanDon.getTrangThaiGhn() == null
+                ? ""
+                : vanDon.getTrangThaiGhn().trim().toLowerCase();
+
+        // Gọi lại cùng trạng thái thì coi như idempotent.
+        if (target.equals(current)) {
+            return toResponse(vanDon);
+        }
+
+        int currentIndex = flow.indexOf(current);
+
+        if (currentIndex < 0) {
+            throw new RuntimeException(
+                    "Trạng thái vận chuyển hiện tại không thuộc luồng giả lập"
+            );
+        }
+
+        // Chỉ cho đi từng bước, không nhảy cóc.
+        if (targetIndex != currentIndex + 1) {
+            throw new RuntimeException(
+                    "Phải chuyển trạng thái vận chuyển theo đúng thứ tự"
+            );
+        }
+
+        vanDon.setTrangThaiGhn(target);
+        vanDon.setTrangThai(
+                chuyenTrangThaiNoiBo(target)
+        );
+
+        VanDonGhn saved =
+                vanDonRepository.saveAndFlush(
+                        vanDon
+                );
+
+        if ("delivered".equalsIgnoreCase(target)) {
+            codOnlineService.xacNhanDaThuTien(
+                    idHoaDon
+            );
+        }
+        return toResponse(saved);
     }
 }

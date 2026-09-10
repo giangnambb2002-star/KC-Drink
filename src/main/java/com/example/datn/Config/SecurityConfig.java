@@ -33,6 +33,28 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public
                         .requestMatchers("/error").permitAll()
+                        // khách chưa đăng nhập vẫn được xem sản phẩm.
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/online/products",
+                                "/api/online/products/**"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/api/online/dia-chi",
+                                "/api/online/dia-chi/**"
+                        ).hasRole("USER")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/online/checkout/**"
+                        ).hasRole("USER")
+                        .requestMatchers(
+                                "/api/online/orders",
+                                "/api/online/orders/**"
+                        ).hasRole("USER")
+                        .requestMatchers(
+                                "/api/online/vouchers",
+                                "/api/online/vouchers/**"
+                        ).hasRole("USER")
                         // Auth
                         .requestMatchers(
                                 "/api/auth/me",
@@ -121,7 +143,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/nhat-ky-he-thong/**").hasRole("ADMIN")
                         .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
                         // Khóa chặt các API còn lại
-
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(

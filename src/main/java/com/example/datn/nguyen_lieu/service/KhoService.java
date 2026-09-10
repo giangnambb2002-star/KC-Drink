@@ -17,6 +17,15 @@ public class KhoService {
      * THUẬT TOÁN FEFO (First-Expired, First-Out)
      * Trừ số lượng nguyên liệu từ các lô còn hạn, ưu tiên lô sắp hết hạn trước.
      */
+    public BigDecimal getTongTonKhaDung(Integer idNguyenLieu) {
+        nguyenLieuRepository.findById(idNguyenLieu)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu"));
+
+        BigDecimal tongTon = loNguyenLieuRepository
+                .getTongTonKhoConHan(idNguyenLieu);
+
+        return tongTon != null ? tongTon : BigDecimal.ZERO;
+    }
     public void kiemTraDuTon(Integer idNguyenLieu, Double soLuongCanDung) {
         if (soLuongCanDung == null || soLuongCanDung <= 0) {
             throw new RuntimeException("Số lượng nguyên liệu cần dùng phải lớn hơn 0");

@@ -24,6 +24,10 @@ public class HoaDon {
     @Column(name = "ma_hoa_don", length = 20)
     private String maHoaDon;
 
+    @Column(name = "client_request_id", length = 100)
+    private String clientRequestId;
+
+
     @Column(name = "loai_hoa_don", length = 20)
     private String loaiHoaDon;
 
@@ -51,8 +55,18 @@ public class HoaDon {
     @Column(name = "payos_payment_link_id", length = 100)
     private String payosPaymentLinkId;
 
+
+    @Column(name = "payos_checkout_url", length = 1000)
+    private String payosCheckoutUrl;
+
+    @Column(name = "payos_qr_code", columnDefinition = "NVARCHAR(MAX)")
+    private String payosQrCode;
+
     @Column(name = "payos_status", length = 20)
     private String payosStatus;
+
+    @Column(name = "payos_expires_at")
+    private LocalDateTime payosExpiresAt;
 
     @Column(name = "trang_thai", length = 20)
     private String trangThai;

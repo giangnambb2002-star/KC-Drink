@@ -109,7 +109,7 @@ public class HoaDonService {
     @Transactional
     public HoaDonResponse taoHoaDonOffline(TaoHoaDonOfflineRequest request) {
         HoaDon hoaDon = new HoaDon();
-        hoaDon.setMaHoaDon(taoMaHoaDon());
+        hoaDon.setMaHoaDon(null);
         hoaDon.setLoaiHoaDon("OFFLINE");
         hoaDon.setNgayTao(LocalDateTime.now());
         hoaDon.setTongTien(BigDecimal.ZERO);
@@ -128,7 +128,15 @@ public class HoaDonService {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên"));
             hoaDon.setNhanVien(nhanVien);
         }
-        return toResponse(repository.save(hoaDon));
+        hoaDon = repository.saveAndFlush(hoaDon);
+
+        hoaDon.setMaHoaDon(
+                "HD" + String.format("%02d", hoaDon.getIdHoaDon())
+        );
+
+        hoaDon = repository.save(hoaDon);
+
+        return toResponse(hoaDon);
     }
     @Transactional
     public HoaDonResponse themMon(
@@ -646,9 +654,9 @@ public class HoaDonService {
         response.setThanhTien(topping.getThanhTien());
         return response;
     }
-    private String taoMaHoaDon() {
-        return "HD" + System.currentTimeMillis();
-    }
+//    private String taoMaHoaDon() {
+//        return "HD" + System.currentTimeMillis();
+//    }
     @Transactional
     public HoaDonResponse thanhToanHoaDon(Integer idHoaDon, ThanhToanHoaDonRequest request) {
         HoaDon hoaDon = getHoaDonChoThanhToanCoKhoa(idHoaDon);
@@ -675,32 +683,60 @@ public class HoaDonService {
                     .findByHoaDon_IdHoaDon(idHoaDon);
         }
         Voucher voucher = hoaDon.getVoucher();
+
         if (voucher != null) {
+
+            voucher = voucherRepository
+                    .findByIdForUpdate(voucher.getIdVoucher())
+                    .orElseThrow(() ->
+                            new RuntimeException(
+                                    "Voucher không còn tồn tại"
+                            )
+                    );
+
             LocalDateTime now = LocalDateTime.now();
-            if (voucher.getTrangThai() == null || voucher.getTrangThai() != 1) {
-                throw new RuntimeException("Voucher không còn khả dụng");
+
+            if (voucher.getTrangThai() == null
+                    || voucher.getTrangThai() != 1) {
+                throw new RuntimeException(
+                        "Voucher không còn khả dụng"
+                );
             }
-            if (voucher.getSoLuong() != null && voucher.getSoLuong() <= 0) {
-                throw new RuntimeException("Voucher đã hết lượt sử dụng");
+
+            if (voucher.getSoLuong() != null
+                    && voucher.getSoLuong() <= 0) {
+                throw new RuntimeException(
+                        "Voucher đã hết lượt sử dụng"
+                );
             }
+
             if (voucher.getNgayBatDau() != null
                     && now.isBefore(voucher.getNgayBatDau())) {
-                throw new RuntimeException("Voucher chưa đến thời gian sử dụng");
+                throw new RuntimeException(
+                        "Voucher chưa đến thời gian sử dụng"
+                );
             }
+
             if (voucher.getNgayKetThuc() != null
                     && now.isAfter(voucher.getNgayKetThuc())) {
-                throw new RuntimeException("Voucher đã hết hạn");
+                throw new RuntimeException(
+                        "Voucher đã hết hạn"
+                );
             }
+
             if (voucher.getIdKhachHang() != null
                     && (hoaDon.getKhachHang() == null
                     || !voucher.getIdKhachHang().equals(
-                    hoaDon.getKhachHang().getIdKhachHang()))) {
+                    hoaDon.getKhachHang().getIdKhachHang()
+            ))) {
                 throw new RuntimeException(
                         "Voucher không thuộc về khách hàng của hóa đơn"
                 );
             }
+
             if (voucher.getDieuKien() != null
-                    && hoaDon.getTongTien().compareTo(voucher.getDieuKien()) < 0) {
+                    && hoaDon.getTongTien()
+                    .compareTo(voucher.getDieuKien()) < 0) {
                 throw new RuntimeException(
                         "Hóa đơn chưa đạt giá trị tối thiểu để dùng voucher"
                 );
@@ -1142,6 +1178,49 @@ public class HoaDonService {
         }
     }
     @Transactional
+    public void kiemTraDieuKienThanhToan(
+            Integer idHoaDon
+    ) {
+        HoaDon hoaDon =
+                getHoaDonChoThanhToanCoKhoa(
+                        idHoaDon
+                );
+
+        List<HoaDonChiTiet> chiTietList =
+                chiTietRepository
+                        .findByHoaDon_IdHoaDon(
+                                idHoaDon
+                        );
+
+        if (chiTietList.isEmpty()) {
+            throw new RuntimeException(
+                    "Hóa đơn chưa có sản phẩm"
+            );
+        }
+
+        if (hoaDon.getThanhTien() == null
+                || hoaDon.getThanhTien()
+                .compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException(
+                    "Số tiền thanh toán không hợp lệ"
+            );
+        }
+
+        /*
+         * Chỉ CHECK.
+         *
+         * Chưa trừ kho.
+         * Chưa trừ voucher.
+         */
+        kiemTraKhoTruocThanhToan(
+                chiTietList
+        );
+
+        kiemTraVoucherThanhToan(
+                hoaDon
+        );
+    }
+    @Transactional
     public PayOSCreateResponse taoThanhToanPayOS(Integer idHoaDon) {
         HoaDon hoaDon = getHoaDonChoThanhToanDeSua(idHoaDon);
         List<HoaDonChiTiet> chiTietList =
@@ -1278,6 +1357,7 @@ public class HoaDonService {
             String hinhThucThanhToan,
             Boolean coGiaoHang,
             String trangThaiGhn,
+            String trangThaiVanDon,
             LocalDate tuNgay,
             LocalDate denNgay,
             int page,
@@ -1327,6 +1407,7 @@ public class HoaDonService {
                 hinhThucThanhToan,
                 coGiaoHang,
                 trangThaiGhn,
+                trangThaiVanDon,
                 tuNgayTime,
                 denNgayExclusive,
                 pageable

@@ -70,10 +70,14 @@ public class VoucherService {
 
         Voucher voucher = optionalVoucher.get();
 
-        if (!voucher.getIdKhachHang().equals(request.getIdKhachHang())) {
-            return new VoucherValidationResponse(false, BigDecimal.ZERO, "Mã giảm giá này không thuộc về tài khoản của bạn!");
+        if (voucher.getIdKhachHang() != null && !voucher.getIdKhachHang().equals(request.getIdKhachHang()
+        )) {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Mã giảm giá này không thuộc về tài khoản của bạn!"
+            );
         }
-
         if (voucher.getTrangThai() == 0) {
             return new VoucherValidationResponse(false, BigDecimal.ZERO, "Mã giảm giá này đã được sử dụng!");
         }
@@ -110,6 +114,164 @@ public class VoucherService {
         return new VoucherValidationResponse(true, soTienGiam, "Áp dụng mã giảm giá thành công!");
     }
 
+    public VoucherValidationResponse kiemTraVoucherTheoId(
+            Integer idVoucher,
+            Integer idKhachHang,
+            BigDecimal tongTienDonHang
+    ) {
+        if (idVoucher == null) {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Vui lòng chọn voucher"
+            );
+        }
+
+        if (tongTienDonHang == null
+                || tongTienDonHang.compareTo(BigDecimal.ZERO) <= 0) {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Đơn hàng chưa có giá trị để áp dụng voucher"
+            );
+        }
+
+        Voucher voucher = repository.findById(idVoucher)
+                .orElse(null);
+
+        if (voucher == null) {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Voucher không tồn tại"
+            );
+        }
+
+        /*
+         * Voucher riêng:
+         * idKhachHang != null -> chỉ đúng khách đó dùng.
+         *
+         * Voucher chung:
+         * idKhachHang == null -> mọi khách đều dùng được.
+         */
+        if (voucher.getIdKhachHang() != null
+                && !voucher.getIdKhachHang().equals(idKhachHang)) {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Voucher không thuộc về khách hàng đang đăng nhập"
+            );
+        }
+
+        if (voucher.getTrangThai() == null
+                || voucher.getTrangThai() != 1) {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Voucher không còn khả dụng"
+            );
+        }
+
+        if (voucher.getSoLuong() != null
+                && voucher.getSoLuong() <= 0) {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Voucher đã hết lượt sử dụng"
+            );
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (voucher.getNgayBatDau() != null
+                && now.isBefore(voucher.getNgayBatDau())) {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Voucher chưa đến thời gian sử dụng"
+            );
+        }
+
+        if (voucher.getNgayKetThuc() != null
+                && now.isAfter(voucher.getNgayKetThuc())) {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Voucher đã hết hạn"
+            );
+        }
+
+        if (voucher.getDieuKien() != null
+                && tongTienDonHang.compareTo(
+                voucher.getDieuKien()
+        ) < 0) {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Đơn hàng chưa đạt giá trị tối thiểu để dùng voucher"
+            );
+        }
+
+        BigDecimal soTienGiam;
+
+        if ("PERCENT".equals(voucher.getLoaiVoucher())) {
+
+            if (voucher.getGiaTriGiam() == null) {
+                return new VoucherValidationResponse(
+                        false,
+                        BigDecimal.ZERO,
+                        "Giá trị voucher không hợp lệ"
+                );
+            }
+
+            soTienGiam = tongTienDonHang
+                    .multiply(voucher.getGiaTriGiam())
+                    .divide(
+                            BigDecimal.valueOf(100),
+                            2,
+                            java.math.RoundingMode.HALF_UP
+                    );
+
+            if (voucher.getGiamToiDa() != null
+                    && soTienGiam.compareTo(
+                    voucher.getGiamToiDa()
+            ) > 0) {
+                soTienGiam = voucher.getGiamToiDa();
+            }
+
+        } else if ("FIXED".equals(voucher.getLoaiVoucher())) {
+
+            if (voucher.getGiaTriGiam() == null) {
+                return new VoucherValidationResponse(
+                        false,
+                        BigDecimal.ZERO,
+                        "Giá trị voucher không hợp lệ"
+                );
+            }
+
+            soTienGiam = voucher.getGiaTriGiam();
+
+        } else {
+            return new VoucherValidationResponse(
+                    false,
+                    BigDecimal.ZERO,
+                    "Loại voucher không hợp lệ"
+            );
+        }
+
+        soTienGiam = soTienGiam
+                .min(tongTienDonHang)
+                .setScale(
+                        0,
+                        java.math.RoundingMode.HALF_UP
+                );
+
+        return new VoucherValidationResponse(
+                true,
+                soTienGiam,
+                "Áp dụng voucher thành công"
+        );
+    }
     // Hàm chuyển đổi Entity -> DTO
     private VoucherResponse toResponse(Voucher voucher) {
         VoucherResponse response = new VoucherResponse();

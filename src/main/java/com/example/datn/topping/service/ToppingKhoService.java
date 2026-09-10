@@ -18,6 +18,15 @@ public class ToppingKhoService {
     private final LoToppingRepository loToppingRepository;
     private final ToppingRepository toppingRepository;
 
+    public BigDecimal getTongTonKhaDung(Integer idTopping) {
+        toppingRepository.findById(idTopping)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy topping"));
+
+        BigDecimal tongTon = loToppingRepository
+                .getTongTonKhoConHan(idTopping);
+
+        return tongTon != null ? tongTon : BigDecimal.ZERO;
+    }
     public void kiemTraDuTon(Integer idTopping, Integer soLuongCanDung) {
         if (soLuongCanDung == null || soLuongCanDung <= 0) {
             throw new RuntimeException("Số lượng topping cần dùng phải lớn hơn 0");

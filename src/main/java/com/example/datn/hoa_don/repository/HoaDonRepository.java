@@ -11,12 +11,20 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
 
     Optional<HoaDon> findByMaHoaDon(String maHoaDon);
 
+    Optional<HoaDon> findByClientRequestId(String clientRequestId);
+
+    Page<HoaDon> findByKhachHang_IdKhachHangAndLoaiHoaDon(
+            Integer idKhachHang,
+            String loaiHoaDon,
+            Pageable pageable
+    );
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT h FROM HoaDon h WHERE h.idHoaDon = :idHoaDon")
     Optional<HoaDon> findByIdForUpdate(
@@ -70,6 +78,33 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
                     OR :trangThaiGhn = ''
                     OR v.trangThaiGhn = :trangThaiGhn
                 )
+                    AND (
+                    :trangThaiVanDon IS NULL
+                    OR :trangThaiVanDon = ''
+                
+                    OR (
+                        :trangThaiVanDon = 'CHO_XU_LY'
+                        AND v.idVanDon IS NOT NULL
+                        AND (
+                            v.maVanDonGhn IS NULL
+                            OR v.maVanDonGhn = ''
+                        )
+                        AND v.trangThai IN (
+                            'CHO_TAO_DON',
+                            'DA_TIEP_NHAN'
+                        )
+                        AND h.trangThai <> 'DA_HUY'
+                    )
+                
+                    OR (
+                        :trangThaiVanDon = 'DA_TAO_DON'
+                        AND v.idVanDon IS NOT NULL
+                        AND v.maVanDonGhn IS NOT NULL
+                        AND v.maVanDonGhn <> ''
+                        AND h.trangThai <> 'DA_HUY'
+                        AND v.trangThai <> 'DA_HUY'
+                    )
+                    )
                 AND (
                     :tuNgay IS NULL
                     OR h.ngayTao >= :tuNgay
@@ -124,6 +159,33 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
                     OR :trangThaiGhn = ''
                     OR v.trangThaiGhn = :trangThaiGhn
                 )
+                    AND (
+                    :trangThaiVanDon IS NULL
+                    OR :trangThaiVanDon = ''
+                
+                    OR (
+                        :trangThaiVanDon = 'CHO_XU_LY'
+                        AND v.idVanDon IS NOT NULL
+                        AND (
+                            v.maVanDonGhn IS NULL
+                            OR v.maVanDonGhn = ''
+                        )
+                        AND v.trangThai IN (
+                            'CHO_TAO_DON',
+                            'DA_TIEP_NHAN'
+                        )
+                        AND h.trangThai <> 'DA_HUY'
+                    )
+                
+                    OR (
+                        :trangThaiVanDon = 'DA_TAO_DON'
+                        AND v.idVanDon IS NOT NULL
+                        AND v.maVanDonGhn IS NOT NULL
+                        AND v.maVanDonGhn <> ''
+                        AND h.trangThai <> 'DA_HUY'
+                        AND v.trangThai <> 'DA_HUY'
+                    )
+                    )
                 AND (
                     :tuNgay IS NULL
                     OR h.ngayTao >= :tuNgay
@@ -139,6 +201,7 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
                     )
                 """
     )
+
     Page<HoaDon> searchHoaDon(
             @Param("keyword") String keyword,
             @Param("trangThai") String trangThai,
@@ -146,8 +209,63 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
             @Param("hinhThucThanhToan") String hinhThucThanhToan,
             @Param("coGiaoHang") Boolean coGiaoHang,
             @Param("trangThaiGhn") String trangThaiGhn,
+            @Param("trangThaiVanDon") String trangThaiVanDon,
             @Param("tuNgay") LocalDateTime tuNgay,
             @Param("denNgayExclusive") LocalDateTime denNgayExclusive,
             Pageable pageable
+    );
+    @Query("""
+    SELECT h.idHoaDon
+    FROM HoaDon h
+    WHERE h.loaiHoaDon = 'ONLINE'
+      AND h.trangThai = 'CHO_THANH_TOAN'
+      AND h.payosExpiresAt IS NOT NULL
+      AND h.payosExpiresAt <= :now
+""")
+    List<Integer> findIdDonOnlineQuaHan(
+            @Param("now") LocalDateTime now
+    );
+    long countByLoaiHoaDonAndNgayTaoGreaterThanEqualAndNgayTaoLessThan(
+            String loaiHoaDon,
+            LocalDateTime tuNgay,
+            LocalDateTime denNgay
+    );
+
+    long countByTrangThaiAndNgayTaoGreaterThanEqualAndNgayTaoLessThan(
+            String trangThai,
+            LocalDateTime tuNgay,
+            LocalDateTime denNgay
+    );
+
+    @Query("""
+    SELECT COALESCE(SUM(h.thanhTien), 0)
+    FROM HoaDon h
+    WHERE h.trangThai = 'DA_THANH_TOAN'
+      AND h.ngayTao >= :tuNgay
+      AND h.ngayTao < :denNgay
+""")
+    java.math.BigDecimal sumDoanhThuDaThanhToan(
+            @Param("tuNgay") LocalDateTime tuNgay,
+            @Param("denNgay") LocalDateTime denNgay
+    );
+    @Query("""
+    SELECT new com.example.datn.dashboard.dto.DashboardNhanVienResponse(
+        nv.idNhanVien,
+        nv.tenNhanVien,
+        COUNT(h.idHoaDon),
+        COALESCE(SUM(h.thanhTien), 0)
+    )
+    FROM HoaDon h
+    JOIN h.nhanVien nv
+    WHERE h.trangThai = 'DA_THANH_TOAN'
+      AND h.ngayTao >= :tuNgay
+      AND h.ngayTao < :denNgay
+    GROUP BY nv.idNhanVien, nv.tenNhanVien
+    ORDER BY COALESCE(SUM(h.thanhTien), 0) DESC
+""")
+    List<com.example.datn.dashboard.dto.DashboardNhanVienResponse>
+    findThongKeNhanVien(
+            @Param("tuNgay") LocalDateTime tuNgay,
+            @Param("denNgay") LocalDateTime denNgay
     );
 }

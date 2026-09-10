@@ -1,9 +1,11 @@
 package com.example.datn.voucher.repository;
 
 import com.example.datn.voucher.entity.Voucher;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -48,4 +50,14 @@ public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
             "AND v.ngayBatDau <= CURRENT_TIMESTAMP " +
             "AND v.ngayKetThuc >= CURRENT_TIMESTAMP")
     long countVoucherDangHoatDong();
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT v
+        FROM Voucher v
+        WHERE v.idVoucher = :idVoucher
+        """)
+    Optional<Voucher> findByIdForUpdate(
+            @Param("idVoucher") Integer idVoucher
+    );
 }

@@ -16,9 +16,11 @@ import com.example.datn.hoa_don.dto.VoucherKhaDungResponse;
 import com.example.datn.hoa_don.service.HoaDonService;
 import com.example.datn.payos.dto.PayOSCreateResponse;
 import com.example.datn.payos.dto.PayOSPaymentStatusResponse;
+import com.example.datn.tai_khoan.entity.TaiKhoan;
 import com.example.datn.van_chuyen.dto.ThietLapGiaoHangRequest;
 import com.example.datn.van_chuyen.dto.VanDonGhnResponse;
 import com.example.datn.van_chuyen.service.VanDonGhnService;
+import org.springframework.security.core.Authentication;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -232,6 +234,23 @@ public class HoaDonController {
                 null
         );
     }
+    @PostMapping("/{id}/giao-hang/tiep-nhan")
+    public ApiResponse<VanDonGhnResponse> tiepNhanDon(
+            @PathVariable Integer id,
+            Authentication authentication
+    ) {
+        TaiKhoan taiKhoan =
+                (TaiKhoan) authentication.getPrincipal();
+
+        return new ApiResponse<>(
+                200,
+                "Tiếp nhận đơn hàng thành công",
+                vanDonGhnService.tiepNhanDon(
+                        id,
+                        taiKhoan
+                )
+        );
+    }
     @PostMapping("/{id}/giao-hang/tao-don-ghn")
     public ApiResponse<VanDonGhnResponse> taoDonGhn(
             @PathVariable Integer id) {
@@ -250,7 +269,20 @@ public class HoaDonController {
                 vanDonGhnService.lamMoiTrangThaiGhn(id)
         );
     }
+    @PostMapping("/{id}/giao-hang/gia-lap-trang-thai/{trangThaiGhn}")
+    public ApiResponse<VanDonGhnResponse> giaLapTrangThaiGhn(
+            @PathVariable Integer id,
+            @PathVariable String trangThaiGhn) {
 
+        return new ApiResponse<>(
+                200,
+                "Giả lập trạng thái vận chuyển thành công",
+                vanDonGhnService.giaLapTrangThaiGhn(
+                        id,
+                        trangThaiGhn
+                )
+        );
+    }
     @PostMapping("/{id}/giao-hang/huy-don-ghn")
     public ApiResponse<VanDonGhnResponse> huyDonGhn(
             @PathVariable Integer id) {
@@ -268,6 +300,7 @@ public class HoaDonController {
             @RequestParam(required = false) String hinhThucThanhToan,
             @RequestParam(required = false) Boolean coGiaoHang,
             @RequestParam(required = false) String trangThaiGhn,
+            @RequestParam(required = false) String trangThaiVanDon,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
                     LocalDate tuNgay,
@@ -289,6 +322,7 @@ public class HoaDonController {
                         hinhThucThanhToan,
                         coGiaoHang,
                         trangThaiGhn,
+                        trangThaiVanDon,
                         tuNgay,
                         denNgay,
                         page,
