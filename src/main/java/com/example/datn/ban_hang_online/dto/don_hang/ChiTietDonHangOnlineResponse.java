@@ -21,6 +21,9 @@ public class ChiTietDonHangOnlineResponse {
     private LocalDateTime ngayTao;
 
     private String trangThai;
+    private Integer doUuTien;
+    private String maLyDoCho;
+    private String lyDoCho;
     private String hinhThucThanhToan;
 
     private String payosStatus;

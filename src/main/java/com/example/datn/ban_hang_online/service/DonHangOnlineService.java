@@ -1245,6 +1245,15 @@ public class DonHangOnlineService {
                 .trangThai(
                         hoaDonResponse.getTrangThai()
                 )
+                .doUuTien(
+                        hoaDon.getDoUuTien()
+                )
+                .maLyDoCho(
+                        hoaDon.getMaLyDoCho()
+                )
+                .lyDoCho(
+                        hoaDon.getLyDoCho()
+                )
                 .hinhThucThanhToan(
                         hoaDonResponse.getHinhThucThanhToan()
                 )

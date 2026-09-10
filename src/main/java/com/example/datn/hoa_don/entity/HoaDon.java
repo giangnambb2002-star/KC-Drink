@@ -31,6 +31,15 @@ public class HoaDon {
     @Column(name = "loai_hoa_don", length = 20)
     private String loaiHoaDon;
 
+    @Column(name = "do_uu_tien", nullable = false)
+    private Integer doUuTien;
+
+    @Column(name = "ma_ly_do_cho", length = 50)
+    private String maLyDoCho;
+
+    @Column(name = "ly_do_cho", length = 255)
+    private String lyDoCho;
+
     @Column(name = "ngay_tao")
     private LocalDateTime ngayTao;
 
@@ -94,6 +103,9 @@ public class HoaDon {
 
     @PrePersist
     public void prePersist() {
+        if (doUuTien == null) {
+            doUuTien = "OFFLINE".equalsIgnoreCase(loaiHoaDon) ? 100 : 10;
+        }
         if (ngayTao == null) {
             ngayTao = LocalDateTime.now();
         }

@@ -750,6 +750,15 @@ public class ThanhToanOnlineService {
                 .trangThaiDonHang(
                         hoaDon.getTrangThai()
                 )
+                .doUuTien(
+                        hoaDon.getDoUuTien()
+                )
+                .maLyDoCho(
+                        hoaDon.getMaLyDoCho()
+                )
+                .lyDoCho(
+                        hoaDon.getLyDoCho()
+                )
                 .payosOrderCode(
                         hoaDon.getPayosOrderCode()
                 )

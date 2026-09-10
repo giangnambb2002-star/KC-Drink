@@ -19,6 +19,12 @@ public class TrangThaiThanhToanOnlineResponse {
 
     private String trangThaiDonHang;
 
+    private Integer doUuTien;
+
+    private String maLyDoCho;
+
+    private String lyDoCho;
+
     private Long payosOrderCode;
 
     private Long amount;
